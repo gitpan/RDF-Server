@@ -2,6 +2,8 @@ package RDF::Server::Model::RDFCore;
 
 use Moose;
 with 'RDF::Server::Role::Model';
+with 'RDF::Server::Role::Resource';
+with 'RDF::Server::Role::Mutable';
 
 use MooseX::Types::Moose qw( ArrayRef );
 
@@ -21,6 +23,8 @@ has store => (
 
 no Moose;
 
+sub get_value { undef }
+
 sub resource {
     my($self, $id) = @_;
 
@@ -39,7 +43,7 @@ sub resource {
 sub resources {
     my($self, $namespace) = @_;
 
-    $namespace ||= $self -> namespace;
+    $namespace = $self -> namespace unless defined $namespace;
 
     # return a list of Resource objects for subjects in the namespace
     # or an iterator if we can
@@ -82,25 +86,29 @@ sub has_triple {
     );
 }
 
-#sub get_triples {
-#    my($self, $s, $p, $o) = @_;
-#
-#    my $iter = $self -> store -> getStmts(
-#        $self -> _make_resource( $s ),
-#        $self -> _make_resource( $p ),
-#        is_ArrayRef( $o ) ? $self -> _make_resource( $o ) 
-#                          : $self -> _make_literal( $o )
-#    );
-#
-#    my $e = $iter -> getFirst;
-#    my $t;
-#    iterator {
-#        return unless $e;
-#        $t = $e -> getLabel;
-#        $e = $iter -> getNext;
-#        $t;
-#    };
-#}
+sub get_triples {
+    my($self, $s, $p, $o) = @_;
+
+    my $iter = $self -> store -> getStmts(
+        $self -> _make_resource( $s ),
+        $self -> _make_resource( $p ),
+        is_ArrayRef( $o ) ? $self -> _make_resource( $o ) 
+                          : $self -> _make_literal( $o )
+    );
+
+    my $e = $iter -> getFirst;
+    my $t;
+    iterator {
+        return unless $e;
+        $t = [ 
+            [ $e -> getSubject -> getNamespace, $e -> getSubject -> getLocalValue ],
+            [ $e -> getPredicate -> getNamespace, $e -> getPredicate -> getLocalValue ],
+            ( $e -> getObject -> isa('RDF::Core::Literal') ? $e -> getObject -> getValue : [ $e -> getObject -> getNamespace, $e -> getObject -> getLocalValue ] )
+        ];
+        $e = $iter -> getNext;
+        $t;
+    };
+}
 
 sub add_triple {
     my($self, $s, $p, $o) = @_;
@@ -146,6 +154,110 @@ sub _make_literal {
     RDF::Core::Literal -> new( $l );
 }
 
+sub update {   # POST
+    my($self, $xml) = @_;
+
+    my @stmts;
+
+    my $parser = RDF::Core::Parser -> new(
+        Assert => sub {
+            push @stmts, RDF::Server::Resource::RDFCore -> _triple(@_);
+        },
+        BaseURI => $self -> namespace
+    );
+
+    $parser -> parse($xml);
+    $self -> store -> addStmt( $_ ) foreach @stmts;
+    return 1;
+}
+
+sub fetch {   # GET
+    my($self) = @_;
+
+    my $xml = '';
+    my $serializer = new RDF::Core::Model::Serializer( 
+        Model => $self -> store,
+        Output => \$xml,
+        BaseURI => $self -> namespace
+    );
+    $serializer -> serialize;
+    return $xml;
+}
+
+sub purge { 
+    my($self, $xml) = @_;
+
+        my @stmts;
+
+    my $parser = RDF::Core::Parser -> new(
+        Assert => sub {
+            push @stmts, RDF::Server::Resource::RDFCore -> _triple(@_);
+        },
+        BaseURI => $self -> namespace
+    );
+
+    $parser -> parse( $xml );
+
+    foreach my $stmt (@stmts) {
+        $self -> store -> removeStmt( $stmt );
+    }
+    return 1;
+}
+
+sub delete {  # remove resource completely
+    my($self) = @_;
+
+    $self -> purge($self -> fetch);
+}
+
+sub render {
+    my($self, $formatter) = @_;
+
+    if( $formatter -> wants_rdf ) {
+        return $formatter -> resource( $self -> fetch );
+    }
+    else {
+        return $formatter -> resource( $self -> data );
+    }
+}
+
+sub modify {  # modify parts of a resource
+    my($self, $formatter, $xml) = @_;
+
+    $xml = $formatter -> to_rdf( $xml ) if $formatter;
+    $self -> update( $xml );
+    return $self -> render($formatter);
+}
+
+sub replace { # logically purge and create with supplied content
+    my($self, $formatter, $xml) = @_;
+
+    $xml = $formatter -> to_rdf( $xml ) if $formatter;
+    my $old_xml = $self -> fetch;
+    eval {
+        $self -> purge($old_xml);
+        $self -> update($xml);
+    };
+    if($@) {
+        $self -> purge($self -> fetch);
+        $self -> update($old_xml);
+    }
+}
+
+sub remove {  # purge all content directly part of resource
+    my($self, $formatter, $xml) = @_;
+
+    $xml = $formatter -> to_rdf( $xml ) if $formatter;
+    my $old_xml = $self -> fetch;
+    eval {
+        $self -> purge($xml);
+    };
+    if($@) {
+        $self -> purge($self -> fetch);
+        $self -> update($old_xml);
+    }
+}
+
 1;
 
 __END__
@@ -160,7 +272,8 @@ RDF::Server::Model::RDFCore
 
 =head1 DESCRIPTION
 
-Manages a triple store based on RDF::Core.
+Manages a triple store based on RDF::Core.  Support is included for using
+the model as a resource itself for the RDF semantic.
 
 =head1 CONFIGURATION
 
@@ -197,6 +310,14 @@ of the parameter.
 If the object is a string, then it is considered a literal.  Otherwise, 
 it is interpreted in the same manner as the other parameters.
 
+=item get_triples ($s, $p, $o)
+
+=item add_triple ($s, $p, $o)
+
+=item get_value
+
+This method is only valid in resources that are part of a model.
+
 =item resource ( $id | [ $namespace, $id ] )
 
 Returns a RDF::Server::Resource::RDFCore object representing all the triples
@@ -219,6 +340,28 @@ RDF::Server::Resource::RDFCore object.
 
 Returns true if there is at least one triple in the store associated with the
 provided namespace and local name.
+
+=item fetch
+
+Returns the RDF document representing all of the triples within the model.
+
+=item data
+
+Returns a refernce to an array of hashes, one for each resource in the model.
+
+=item update
+
+=item purge
+
+=item render
+
+=item delete
+
+=item modify
+
+=item replace
+
+=item remove
 
 =back
 

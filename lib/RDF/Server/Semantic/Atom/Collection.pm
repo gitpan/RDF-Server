@@ -146,9 +146,11 @@ RDF::Server::Semantic::Atom::Collection - supports use of Atom collection docume
 
 =over 4
 
-=item to_xml
-
 =item create
+
+=item render
+
+=item data
 
 =back
 

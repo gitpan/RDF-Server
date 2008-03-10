@@ -1,6 +1,13 @@
-use Test::More tests => 17;
+use Test::More; # tests => 18;
 
 BEGIN { 
+    if(not not eval "require RDF::Core") {
+        plan tests => 20;
+    }
+    else {
+        plan skip_all => 'RDF::Core required';
+    }
+
     use_ok 'RDF::Server';
     use_ok 'RDF::Server::Types';
     use_ok 'RDF::Server::Semantic::Atom';
@@ -18,6 +25,12 @@ eval {
 #    semantic '+RDF::Server::Semantic::Atom';
 
     render xml => 'Atom';
+
+    eval {
+        render foo => 'Foo';
+    };
+
+    main::isnt( $@, '', 'Bad formatter package causes an error' );
 };
 
 $e = $@;
@@ -67,3 +80,16 @@ isa_ok( $server -> handler -> handlers -> (), 'ARRAY');
 isa_ok( $server -> handler -> handlers -> () -> [0], 'RDF::Server::Semantic::Atom::Collection');
 
 isa_ok( $server -> handler -> handlers -> () -> [0] -> model, 'RDF::Server::Model::RDFCore' );
+
+eval {
+    $server = My::Server -> new(
+        handler => [ collaboration => {
+            title => 'title'
+        }]
+    );
+};
+
+$e = $@;
+
+isnt( $e, '' );
+like( $e, qr{^Unknown Atom \(.*?\) document type: collaboration}, "Got the right kind of error message" );

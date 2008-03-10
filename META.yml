@@ -2,6 +2,7 @@
 abstract: toolkit for building RDF servers
 author: James Smith, C<< <jsmith@cpan.org> >>
 build_requires: 
+  Test::Moose: 0
   Test::More: 0
 distribution_type: module
 generated_by: Module::Install version 0.67
@@ -22,16 +23,11 @@ requires:
   HTTP::Response: 0
   HTTP::Status: 0
   Iterator::Simple: 0.04
-  JSON::Any: 0
-  Log::Handler: 0
   Moose: 0
-  MooseX::Daemonize: 0
   MooseX::Types: 0
-  POE::Component::Server::HTTP: 0
-  RDF::Core: 0
   Sub::Exporter: 0
   Sub::Name: 0
   XML::LibXML: 0
   XML::Simple: 0
 tests: t/*.t t/*/*.t
-version: 0.01
+version: 0.02

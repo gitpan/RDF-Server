@@ -9,6 +9,10 @@ use RDF::Server::Constants qw( :ns );
 my $has_xml_xpath;
 
 BEGIN {
+    if(not eval "require RDF::Core") {
+        plan skip_all => 'RDF::Core required';
+    }
+
     $has_xml_xpath = not not eval { require XML::XPath; };
 
     %path_tests = (
@@ -60,7 +64,8 @@ my $server;
 eval {
     $server = My::Server -> new(
         default_renderer => 'Atom',
-        handler => [ service => {
+        handler => { 
+            type => 'service',
             path_prefix => '/',
             workspaces => [
             {
@@ -87,7 +92,7 @@ eval {
                 ]
             } 
             ]
-        } ],
+        }
     );
 };
 

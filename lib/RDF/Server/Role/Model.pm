@@ -57,6 +57,8 @@ requires 'has_triple';
 
 requires 'add_triple';
 
+requires 'get_triples';
+
 1;
 
 __END__
@@ -103,6 +105,8 @@ RDF storage modules.  See L<RDF::Server::Model>.
 =item resources ($namespace) : Iterator
 
 =item resource_exists ($namespace, $id) : Bool
+
+=item add_triple ($s, $p, $o) : Bool
 
 =item has_triple ($s, $p, $o) : Bool
 

@@ -1,22 +1,24 @@
 use Test::More;
-use lib 't/lib';
 
 BEGIN {
-  eval 'require POE::Component::Server::HTTP';
-
-  if($@) {
-      plan skip_all => 'Testing HTTP protocol requires POE::Component::Server::H
-TTP';
+  foreach my $class (qw(
+      RDF::Core
+      MooseX::Daemonize
+      Log::Handler
+      POE::Component::Server::HTTP
+  )) {
+      plan skip_all => "Testing HTTP protocol requires $class"
+          unless not not eval "require $class";
   }
 
   plan tests => 4;
 }
 
-use My::HTTPRestAtomServer;
+use t::lib::HTTPRestAtomServer;
 
 my $PORT = 2080;
 
-my $UA = My::HTTPRestAtomServer -> fork_and_return_ua(
+my $UA = HTTPRestAtomServer -> fork_and_return_ua(
     port => $PORT,
     loglevel => 8, # test debugging levels
     default_renderer => 'Atom',

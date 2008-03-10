@@ -8,6 +8,8 @@ use RDF::Server::Constants qw(:ns);
 use RDF::Server::XMLDoc;
 use XML::LibXML;
 use RDF::Server::Exception;
+use RDF::Server::Types qw( UUID );
+use RDF::Server ();
 
 # we need a way to communicate the mime type
 
@@ -117,7 +119,7 @@ root element: atom:entry
         my $id = $content[0] -> getAttributeNodeNS( RDF_NS, 'about' );
         my $idv = $id -> getValue();
         my $url = '';
-        if( $idv =~ m{^[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}$} ) {
+        if( is_UUID($idv) ) {
             $url = 'urn:uuid:' . $idv;
         }
         else {
@@ -192,21 +194,65 @@ sub to_rdf {
 # List formatting
 ###
 
+sub _add_text_node {
+    my($self, $doc, $root, $e, $t) = @_;
+    #print STDERR "_add_text_node($e => $t)\n";
+    my $n = $doc -> createElement( $e );
+    $n -> appendTextNode( $t );
+
+    $root -> appendChild( $n );
+}
+
+#
+# we expect: title, id, link
+#     entries: iterator
+#
 sub feed {
-    my($self, @list) = @_;
+    my($self, %c) = @_;
 
-    throw RDF::Server::Exception::BadRequest
-       Content => 'Not implemented';
+    my($doc, $root) = $self -> _new_xml_doc(ATOM_NS, 'feed');
 
-#    my $doc;
+    $self -> _add_text_node( $doc -> document, $root, 'atom:title', $c{title} );
+    $self -> _add_text_node( $doc -> document, $root, 'atom:id', $c{id} );
+    $self -> _add_text_node( $doc -> document, $root, 'atom:generator', "RDF::Server " . $RDF::Server::VERSION );
 
-#    return( 'application/atom+xml', RDF::Server::XMLDoc -> new( document => $doc ) );
+    my $n = $doc -> document -> createElement( 'atom:link' );
+    $n -> setAttribute( href => $c{link} );
+    $n -> setAttribute( rel => 'self' );
+
+
+    my $e;
+    if( $c{entries} ) {
+        while( $e = $c{entries} -> next ) {
+            my $eroot = $doc -> document -> createElement( 'atom:entry' );
+            $self -> _add_text_node( $doc -> document, $eroot, 'atom:title', $e -> get_value(DC_NS, 'title') );
+            $n = $doc -> document -> createElement( 'atom:link' );
+            $n -> setAttribute( href => $e -> uri );
+            $eroot -> appendChild( $n );
+            my $id = $e -> id;
+            if( is_UUID( $id ) ) {
+                $id = "urn:uuid:$id";
+            }
+            else {
+                $id = $e -> uri;
+            }
+            $self -> _add_text_node( $doc -> document, $eroot, 'atom:id', $id );
+            $self -> _add_text_node( $doc -> document, $eroot, 'atom:updated', $e -> get_value(ATOM_NS, 'updated' ) || $e -> get_value(DC_NS, 'created') );
+            $self -> _add_text_node( $doc -> document, $eroot, 'atom:summary', 'rdf content' );
+
+            $root -> appendChild( $eroot );
+        }
+    }
+
+    return( 'application/atom+xml', $doc );
 }
 
 sub category {
     my($self, %c) = @_;
 
     my($doc, $root) = $self -> _new_xml_doc(ATOM_NS, 'category');
+
+    $self -> _add_text_node( $doc -> document, $root, 'atom:title', $c{title} || $c{term} );
 
     $root -> setAttribute( scheme => $c{scheme} );
     $root -> setAttribute( term => $c{term} );
@@ -218,15 +264,14 @@ sub collection {
     my($self, %c) = @_;
 
     my($doc, $root) = $self -> _new_xml_doc('collection');
-    my $n = $doc -> document -> createElement( 'atom:title');
-    $n -> appendTextNode( $c{title} || 'MISSING TITLE' );
 
-    $root -> appendChild( $n );
+    $self -> _add_text_node( $doc -> document, $root, 'atom:title', $c{title} );
 
     foreach my $a ( @{ $c{accept} || [] }) {
-        $n = $doc -> document -> createElement( 'app:accept' );
-        $n -> appendTextNode( $a );
-        $root -> appendChild( $n );
+        $self -> _add_text_node( $doc -> document, $root, 'app:accept', $a );
+        #$n = $doc -> document -> createElement( 'app:accept' );
+        #$n -> appendTextNode( $a );
+        #$root -> appendChild( $n );
     }
 
     if( $c{categories} ) {
@@ -252,10 +297,11 @@ sub workspace {
 
     my($doc, $root) = $self -> _new_xml_doc('workspace');
 
-    my $n = $doc -> document -> createElement( 'atom:title');
-    $n -> appendTextNode( $c{title} );
+    $self -> _add_text_node( $doc -> document, $root, 'atom:title', $c{title} );
+    #my $n = $doc -> document -> createElement( 'atom:title');
+    #$n -> appendTextNode( $c{title} );
 
-    $root -> appendChild( $n );
+    #$root -> appendChild( $n );
 
     foreach my $c (@{$c{collections}}) {
         my($t, $c_doc) = $self -> collection(%$c);

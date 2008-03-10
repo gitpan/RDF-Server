@@ -79,7 +79,7 @@ has aliases => (
 after 'start' => sub {
     my $self = shift;
 
-    return unless $self -> is_daemon;
+    return unless $self -> foreground || $self -> is_daemon;
 
     if(defined $self->aliases->{httpd}) {
         POE::Kernel -> run();
@@ -116,7 +116,11 @@ sub handle {
             $response -> headers -> push_header( $_ => $e -> headers -> {$_} )
                 foreach keys %{$e -> headers};
         }
-        else { die $e; }
+        else { 
+          $self -> logger -> error( $e ); 
+          $response -> code( 500 );
+          $response -> content( 'Uh oh! ' . $e );
+        }
     }
     return $response -> code;
 }

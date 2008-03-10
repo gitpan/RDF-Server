@@ -1,3 +1,17 @@
+0.02  -   9 Mar 2008
+--------------------
+
+Updated to work with recent releases of Moose (0.38) and Class::MOP (0.53)
+
+Added a sample rdf-server script
+
+Made some changes to the Atom semantic to make XML configuration files easier
+
+Added experimental support for FastCGI protocol
+
+Added RDF semantic
+
+
 0.01  -  29 Feb 2008
 --------------------
 

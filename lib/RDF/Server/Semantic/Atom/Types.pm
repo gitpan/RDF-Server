@@ -27,6 +27,12 @@ coerce AtomHandler,
         RDF::Server::Semantic::Atom -> build_atomic_handler(@_);
     };
 
+coerce AtomHandler,
+    from HashRef =>
+    via {
+        RDF::Server::Semantic::Atom -> build_atomic_handler(@_);
+    };
+
 subtype Workspace,
     as Object,
     where { $_ -> isa( 'RDF::Server::Semantic::Atom::Workspace' ) },

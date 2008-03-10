@@ -120,7 +120,8 @@ sub _new_xml_doc {
     my $root = $doc -> createElement($root_element);
     $root -> setNamespace( RDF_NS, 'rdf', $ns eq RDF_NS);
     #$root -> setNamespace( ATOM_NS, 'atom', $ns eq ATOM_NS);
-    $root -> setNamespace( $ns, 'a', 1) if $ns ne APP_NS && $ns ne ATOM_NS;
+    #$root -> setNamespace( $ns, 'a', 1) if $ns ne APP_NS && $ns ne ATOM_NS;
+    $root -> setNamespace( $ns, 'a', 1) if $ns ne RDF_NS;
 
     $doc -> setDocumentElement( $root );
 

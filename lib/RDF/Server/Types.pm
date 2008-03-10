@@ -5,12 +5,14 @@ use MooseX::Types -declare => [qw(
     Renderable Mutable Container
     Exception
     Protocol Interface Semantic Formatter
+    UUID
 )];
 
 use MooseX::Types::Moose qw(
     Object
     ClassName
     Str
+    Any
 );
 
 
@@ -20,17 +22,17 @@ use MooseX::Types::Moose qw(
 
 subtype Handler,
     as Object,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Handler' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Handler' ) },
     message { "Object isn't a Handler" };
 
 subtype Resource,
     as 'Object|ClassName',
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Resource' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Resource' ) },
     message { "Object isn't a Entry" };
 
 subtype Model,
     as 'Object|ClassName',
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Model' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Model' ) },
     message { "Object isn't a Model" };
 
 subtype Exception,
@@ -45,47 +47,90 @@ subtype Exception,
 
 subtype Renderable,
     as 'Object|ClassName',
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Renderable' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Renderable' ) },
     message { "Object isn't Renderable" };
 
 subtype Container,
     as Renderable,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Container' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Container' ) },
     message { "Object isn't a Container" };
 
 subtype Mutable,
     as Renderable,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Role::Mutable' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Role::Mutable' ) },
     message { "Object isn't Mutable" };
 
 
 
 subtype Protocol,
     as ClassName,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Protocol' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Protocol' ) },
     message { "Class isn't a Protocol" };
 
 subtype Interface,
     as ClassName,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Interface' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Interface' ) },
     message { "Class isn't an Interface" };
 
 subtype Semantic,
     as ClassName,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Semantic' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Semantic' ) },
     message { "Class isn't a Semantic" };
 
 subtype Formatter,
     as ClassName,
-    where { RDF::Server::Types::does_role($_, 'RDF::Server::Formatter' ) },
+    where { RDF::Server::Types::_does_role($_, 'RDF::Server::Formatter' ) },
     message { "Class isn't a Formatter" };
 
 
+subtype UUID,
+    as Str,
+    where { m{^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$}i },
+    message { "String isn't a uuid" };
 
-sub does_role {
+
+###
+# coercions
+###
+
+coerce Model,
+    from HashRef =>
+    via {
+        my($eh_config) = @_;
+
+        my $eh_class = delete $eh_config->{class};
+         #print STDERR "eh_class: $eh_class\n";
+        eval {
+            Class::MOP::load_class('RDF::Server::Model::' . $eh_class);
+            $eh_class = 'RDF::Server::Model::' . $eh_class;
+        };
+        if( $@ ) {
+            eval {
+                Class::MOP::load_class($eh_class);
+            };
+            if( $@ ) {
+                Carp::confess qq{Unable to load $eh_class or RDF::Server::Model::$eh_class};
+            }
+        }
+
+        $eh_class -> new( %$eh_config );
+    };
+
+###
+# support functions
+###
+
+sub _does_role {
     my( $class, $role ) = @_;
 
-    $class -> can('meta') && $class -> meta && $class -> meta -> does_role( $role );
+    #print STDERR "does role: $class ? $role\n";
+    my $ret = 0;
+    eval {
+        $ret = $class -> can('meta') && $class -> meta && $class -> meta -> does_role( $role );
+    };
+
+    return 0 if $@;
+    return $ret;
 }
 
 1;
@@ -131,17 +176,6 @@ This module bundles together useful types.
 =item Protocol
 
 =item Exception
-
-=back
-
-=head1 METHODS
-
-=over 4
-
-=item does_role ($class, $role)
-
-Returns true if the particular class does the indicated role, or if the class
-extends or includes a module that has the indicated role.
 
 =back
 

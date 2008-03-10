@@ -4,7 +4,7 @@ BEGIN {
     eval "use RDF::Core::Model";
     plan skip_all => 'RDF::Core required' if $@;
 
-    plan tests => 64;
+    plan tests => 65;
 
     use_ok('RDF::Server::Resource::RDFCore');
 
@@ -229,6 +229,8 @@ is( $@, '', 'purge without problems' );
 $titles = $new_r -> data -> {'{http://example.com/ns/}title'};
 
 is( $titles, "Baz's Title", "one title left" );
+
+ok( $new_r -> has_triple( undef, [ 'http://example.com/ns/', 'title' ], "Baz's Title" ) );
 
 ###
 # Add a bag

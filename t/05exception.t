@@ -1,10 +1,15 @@
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More; # tests => 9;
 
 use RDF::Server::Types qw( Exception );
 
-BEGIN { use_ok 'RDF::Server::Exception' }
+if( not not eval 'require RDF::Server::Exception' ) {
+    plan tests => 9;
+}
+else {
+    plan skip_all => 'Unable to load RDF::Server::Exception';
+}
 
 eval {
    RDF::Server::Exception -> throw( 

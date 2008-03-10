@@ -1,4 +1,4 @@
-use Test::More tests => 18;
+use Test::More tests => 19;
 
 BEGIN { 
     use_ok 'RDF::Server';
@@ -145,3 +145,11 @@ ok( My::Server7 -> does( 'RDF::Server::Interface::REST' ), 'Interface is REST' )
 
 ok( My::Server6 -> does( 'RDF::Server::Protocol::Embedded' ), 'Default protocol is set' );
 ok( My::Server3 -> does( 'RDF::Server::Semantic::Atom' ), 'Semantic is Atom' );
+
+eval {
+    package My::Server10;
+
+    use RDF::Server qw( REST HTTP Atom Daemonize );
+};
+
+is( $@, '' );

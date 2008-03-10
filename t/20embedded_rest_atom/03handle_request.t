@@ -4,13 +4,17 @@ use Test::More;
 use HTTP::Response;
 use HTTP::Request;
 
-
-print STDERR $@ if $@;
+use Carp::Always;
 
 my( %service_path_tests, %service_path_counts, $has_xml_path );
 my( %collection_path_tests, %collection_path_counts );
 
+
 BEGIN {
+    if(not eval "require RDF::Core") {
+        plan skip_all => 'RDF::Core required';
+    }
+
     $has_xml_xpath = not not eval { require XML::XPath; };
 
     %service_path_tests = (
@@ -80,7 +84,7 @@ eval {
                 collections => [
                   {
                       title => $service_path_tests{'/app:service/app:workspace/app:collection/atom:title'},
-                      path_prefix => 'foo/',
+                      path_prefix => '/foo/',
                       categories => [
                           {
                               term => 'digital',

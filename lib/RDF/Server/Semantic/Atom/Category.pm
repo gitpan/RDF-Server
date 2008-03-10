@@ -136,7 +136,9 @@ RDF::Server::Semantic::Atom::Category - supports use of Atom category documents
 
 =item create
 
-=item to_xml
+=item render
+
+=item data
 
 =back
 

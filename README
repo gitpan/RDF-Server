@@ -1,15 +1,19 @@
-                              RDF::Server 0.01
+                                 RDF::Server 0.02
 
-                      toolkit for building RDF servers
+                          toolkit for building RDF servers
 
 INSTALLATION
-    Installation follows standard Perl module installation.  Once the 
-    download is unpacked:
+    Installation follows standard Perl CPAN module installation steps:
 
-        perl Makefile.PL
-        make
-        make test
-        make install
+     cpan> install RDF::Server
+
+    or, if not using the CPAN tool, then from within the unpacked
+    distribution:
+
+     % perl Makefile.PL
+     % make
+     % make test
+     % make install
 
 DESCRIPTION
     RDF::Server provides a flexible framework with which you can design your
@@ -18,9 +22,14 @@ DESCRIPTION
     capabilities you need to create the service that fits your RDF data and
     how you need to access it.
 
+    The `rdf-server' script is installed as an easy-to-use way of building
+    and running an RDF::Server service. Some sample configuration files are
+    in the `examples' directory of the RDF::Server distribution.
+
     The framework identifies four areas of responsibility:
 
   Protocol
+
     The protocol modules manage the outward facing part of the framework and
     translating the requested operation into an HTTP::Request object that is
     understood by any of the interface modules. Conversely, it translates
@@ -39,19 +48,23 @@ DESCRIPTION
     RDF::Server::Protocol::Embedded, RDF::Server::Protocol::HTTP.
 
   Interface
+
     The interface modules define how the HTTP requests are translated into
     operations on various handlers that manage different aspects of the RDF
     triple store.
 
   Semantic
+
     The semantic modules define the meaning attached to and information
     contained in the various documents and the heirarchy of resources
     available through the interface modules. Most of the content handlers
     are attached to a particular semantic.
 
-    The available semantic is: RDF::Server::Semantic::Atom.
+    The available semantics are: RDF::Server::Semantic::Atom,
+    RDF::Server::Semantic::RDF.
 
   Formatters
+
     The same information can be rendered in several different formats. The
     format modules manage this rendering.
 
@@ -82,15 +95,20 @@ NAMESPACE DESIGN
         is selected by the Interface module.
 
     Model
-        RDF::Server:Model modules interface between the Semantic and
+        RDF::Server::Model modules interface between the Semantic and
         Formatter modules and the backend triple store.
 
     Resource
-        RDF::Server:Resource modules represent particular resources and
+        RDF::Server::Resource modules represent particular resources and
         associated data within a triple store.
 
+BUGS
+    There are bugs. The test suite only covers a little over 90% of the
+    code. Bugs may be reported on rt.cpan.org or by e-mailing bug-RDF-Server
+    at rt.cpan.org.
+
 AUTHOR
-    James Smith, "<jsmith@cpan.org>"
+    James Smith, `<jsmith@cpan.org>'
 
 LICENSE
     Copyright (c) 2008 Texas A&M University.

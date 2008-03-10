@@ -1,6 +1,13 @@
-use Test::More tests => 23;
+use Test::More; # tests => 23;
 
 BEGIN {
+  if( not not eval 'require JSON::Any' ) {
+      plan tests => 23;
+  }
+  else {
+      plan skip_all => 'JSON::Any required to test JSON formatting';
+  }
+  
   use_ok( 'RDF::Server::Formatter::JSON' );
 }
 

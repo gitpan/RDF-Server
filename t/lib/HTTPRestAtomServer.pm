@@ -1,4 +1,4 @@
-package My::HTTPRestAtomServer;
+package HTTPRestAtomServer;
 
 use RDF::Server;
 

@@ -8,15 +8,28 @@ all_from 'lib/RDF/Server.pm';
 ##
 
 # for RDFCore interfacing modules
-requires 'RDF::Core';
+feature 'RDF::Core',
+  -default => 0,
+  'RDF::Core' => 0;
 
 # for JSON formatter
-requires 'JSON::Any';
+feature 'JSON Formatting',
+  -default => 0,
+  'JSON::Any' => 0;
 
 # for HTTP protocol handler
-requires 'MooseX::Daemonize';
-requires 'POE::Component::Server::HTTP';
-requires 'Log::Handler';
+feature 'HTTP Protocol',
+  -default => 0,
+  'MooseX::Daemonize' => 0,
+  'POE::Component::Server::HTTP' => 0,
+  'Log::Handler' => 0;
+
+# for FastCGI protocol support
+feature 'FastCGI',
+  -default => 0,
+  'MooseX::Daemonize' => 0,
+  'Log::Handler' => 0,
+  'FCGI' => 0;
 
 ###
 # Following are basic modules
@@ -49,8 +62,13 @@ requires 'XML::Simple';
 
 
 build_requires 'Test::More';
+build_requires 'Test::Moose';
+
 
 tests('t/*.t t/*/*.t');
+author_tests('xt');
+
+install_script glob('script/*.pl');
 
 auto_install;
 WriteAll;

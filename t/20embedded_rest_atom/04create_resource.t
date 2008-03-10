@@ -7,6 +7,10 @@ use HTTP::Request;
 use RDF::Server::Constants qw( :ns );
 
 BEGIN {
+    if(not eval "require RDF::Core") {
+        plan skip_all => 'RDF::Core required';
+    }
+
     eval {
         use RDF::Server;
         use RDF::Server::Semantic::Atom;
@@ -107,7 +111,7 @@ isa_ok( $response, 'HTTP::Response' );
 
 my $returned_content;
 SKIP: {
-   skip 'request not successful', 1 unless $response -> is_success;
+   skip 'request not successful', 2 unless $response -> is_success;
 
    is( $response -> code, 201, 'HTTP CREATED status' );
 
@@ -131,7 +135,7 @@ is( $e, '', 'Request made');
 isa_ok( $response, 'HTTP::Response' );
                 
 SKIP: {
-   skip 'request not successful', 1 unless $response -> is_success;
+   skip 'request not successful', 2 unless $response -> is_success;
                       
    is( $response -> code, 200, 'HTTP OK status' );
 

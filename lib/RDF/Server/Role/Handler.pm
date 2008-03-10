@@ -4,7 +4,7 @@ use Moose::Role;
 
 has path_prefix => (
     is => 'rw',
-    isa => 'Str',
+    isa => 'Maybe[Str]',
 );
 
 has handlers => (
@@ -18,16 +18,19 @@ no Moose::Role;
 sub matches_path { 
     my($self, $p) = @_;
 
-    $p .= '/';
+    $p = "$p/";
     $p =~ s{/+}{/}g;
+    $p =~ s{^/}{};
 
     my $u = $self -> path_prefix;
-    $u .= '/';
-    $u =~ s{/+}{/};
+    $u = "$u/";
+    $u =~ s{/+}{/}g;
     $u =~ s{^/}{};
 
-    index($p, $self -> path_prefix) == 0 ||
-    index($p, '/' . $self -> path_prefix) == 0;
+    ##print STDERR $self -> meta -> name, ": [$p] cmp [$u]\n";
+
+    return($u ? $u : "/") if index($p, $u) == 0;
+    return "/$u" if index($p, '/' . $u) == 0;
 }
 
 sub handles_path {
@@ -35,11 +38,11 @@ sub handles_path {
 
     my($h,$path_info);
 
-
+    #print STDERR "prefix: $prefix; p: $p\n";
     if(defined $self -> path_prefix) {
-
-        if( $self -> matches_path($p) ) {
-            my $fragment = length($self -> path_prefix) <= length($p) ? substr($p, length($self -> path_prefix)) : '';
+        my $matched_prefix;
+        if( $matched_prefix = $self -> matches_path($p) ) {
+            my $fragment = length($matched_prefix) <= length($p) ? substr($p, length($matched_prefix)) : '';
             return( $self, '' ) if $fragment =~ m{^/?$};
 
             return unless defined $self -> handlers;
@@ -69,7 +72,7 @@ __END__
 
 =head1 NAME
 
-RDF::Server::Handler - manages handling part of a URL path
+RDF::Server::Role::Handler - manages handling part of a URL path
 
 =head1 SYNOPSIS
 

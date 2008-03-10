@@ -31,6 +31,28 @@ sub add_triple {
     $self -> model -> add_triple($s, $p, $o);
 }
 
+sub has_triple {
+    my($self, $s, $p, $o) = @_;
+
+    $s ||= [ $self -> model -> namespace, $self -> id ];
+
+    $self -> model -> has_triple($s, $p, $o);
+}
+
+sub get_value {
+    my($self, $ns, $p) = @_;
+
+    my $iter = $self -> model -> get_triples(
+        [ $self -> model -> namespace, $self -> id],
+        [ $ns, $p ],
+        undef
+    );
+
+    my $v = $iter -> next;
+
+    return $v -> [2] if $v;
+    return;
+}
 
 sub uri { $_[0] -> model -> namespace . $_[0] -> id }
 
@@ -39,11 +61,11 @@ sub data {
 
     # we want to return a hashref tree of ourselves
     # useful for JSON and other data structure style formats
-  
+
     my $data = XML::Simple::XMLin($self -> fetch, NSExpand => 1)
                    -> {"{@{[RDF_NS]}}Description"};
 
-    $self -> _collapse_containers( $data );
+    $self -> _collapse_containers( $data ) || { };
 }
 
 sub _collapse_containers {
@@ -102,6 +124,15 @@ RDF::Server::Role::Resource - expectations of a resource object
 
 =head1 SYNOPSIS
 
+ package My::Resource
+
+ use Moose;
+ with 'RDF::Server::Role::Resource';
+
+ sub update { ... }
+ sub fetch { ... }
+ sub purge { ... }
+
 =head1 DESCRIPTION
 
 =head1 CONFIGURATION
@@ -147,6 +178,21 @@ TODO: Security to make sure we don't stray into another resource.
 
 The URI of a resource defaults to the namespace of the model concatenated with
 the C<id> of the resource.
+
+=item add_triple ($s, $p, $o)
+
+This will add the triple to the resource's model.  If the subject is
+undefined, the resource's URI is substituted.
+
+=item has_triple ($s, $p, $o)
+
+This will query the resource's model on the existance of the given
+triple.  If the subject is undefined, the resource's URI is substituted.
+
+=item get_value ($namespace, $localname)
+
+Given the namespace and localname of a predicate, this returns the value
+associated with the predicate and the given resource.
 
 =item data : HashRef
 

@@ -1,21 +1,25 @@
 use Test::More;
-use lib 't/lib';
 
 BEGIN {
-  eval 'require POE::Component::Server::HTTP';
 
-  if($@) {
-      plan skip_all => 'Testing HTTP protocol requires POE::Component::Server::HTTP';
+  foreach my $class (qw(
+      RDF::Core
+      MooseX::Daemonize
+      Log::Handler
+      POE::Component::Server::HTTP
+  )) {
+      plan skip_all => "Testing HTTP protocol requires $class"
+          unless not not eval "require $class";
   }
 
   plan tests => 4;
 
   use_ok('RDF::Server::Protocol::HTTP');
 
-  use_ok('My::HTTPRestAtomServer');
+  use_ok('t::lib::HTTPRestAtomServer');
 };
 
-my $server = My::HTTPRestAtomServer -> new(
+my $server = HTTPRestAtomServer -> new(
   handler => [ collection => {
     title => 'Example Collection',
     model => {
@@ -25,6 +29,6 @@ my $server = My::HTTPRestAtomServer -> new(
   }]
 );
 
-isa_ok( $server, 'My::HTTPRestAtomServer' );
+isa_ok( $server, 'HTTPRestAtomServer' );
 
 isa_ok( $server -> logger, 'Log::Handler' );

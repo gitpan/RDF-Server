@@ -509,6 +509,54 @@ __END__
 
 RDF::Server::Resource::RDFCore
 
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+This class manages triples associated with a particular resource URL.
+
+=head1 CONFIGURATION
+
+=over 4
+
+=item model
+
+The RDF::Server::Model::RDFCore object managing the triple store in which the
+data associated with this resource is stored.
+
+=item bnode_prefix
+
+The prefix used to build blank node ids.
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item exists : Bool
+
+Returns true if the resource object represents a collection of triples in
+the triple store.
+
+=item render
+
+=item fetch
+
+=item purge
+
+=item remove
+
+=item delete
+
+=item modify
+
+=item update
+
+=item replace
+
+=back
+
 =head1 AUTHOR 
             
 James Smith, C<< <jsmith@cpan.org> >>

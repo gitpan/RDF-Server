@@ -30,6 +30,7 @@ sub handle_request {
         throw RDF::Server::Exception::NotFound;
     }
 
+    #print STDERR "handler: $handler\n";
     my %allowed;
 
     if( is_Renderable( $handler ) ) {
@@ -39,6 +40,7 @@ sub handle_request {
     if( is_Mutable( $handler ) ) {
         $allowed{PUT}++;
         $allowed{DELETE}++;
+        $allowed{POST}++;
     }
     if( is_Container( $handler ) ) {
         $allowed{POST}++;
@@ -66,21 +68,33 @@ sub handle_request {
         }
     }
     elsif( $method eq 'POST' ) {
-        if( $request -> content) {
-            my $object = $handler -> create( $formatter, $path_info, $request -> content );
-            if( is_Renderable( $object ) ) {
-                my( $content_type, $content ) = $object -> render( $formatter, $uri_path );
-                $response -> content( $content );
-                $response -> header( 'Content-Type' => $content_type );
-                $response -> code( 201 ); # created
-                $response -> header( Location => $object -> uri . ($extension ? '.' . $extension : '') );
+        if( is_Container( $handler ) ) {
+            if( $request -> content) {
+                my $object = $handler -> create( $formatter, $path_info, $request -> content );
+                if( is_Renderable( $object ) ) {
+                    my( $content_type, $content ) = $object -> render( $formatter, $uri_path );
+                    $response -> content( $content );
+                    $response -> header( 'Content-Type' => $content_type );
+                    $response -> code( 201 ); # created
+                    $response -> header( Location => $object -> uri . ($extension ? '.' . $extension : '') );
+                }
+                else {
+                    eval { $object -> purge; };
+                    throw RDF::Server::Exception::InternalServerError(
+                        Content => 'Did not get a renderable document!'
+                    );
+
+                }
+            }
+        }
+        else {
+            if( $request -> content ) {
+                $handler -> replace( $formatter, $request -> content );
             }
             else {
-                eval { $object -> purge; };
-                throw RDF::Server::Exception::InternalServerError(
-                    Content => 'Did not get a renderable document!'
+                throw RDF::Server::Exception::BadRequest(
+                    content => 'Did not supply a document!'
                 );
-
             }
         }
     }

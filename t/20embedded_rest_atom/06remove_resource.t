@@ -4,13 +4,15 @@ use Test::More;
 use HTTP::Response;
 use HTTP::Request;
 
-use Carp::Always;
-
 use RDF::Server::Constants qw( :ns );
 
 my $has_xml_xpath;
 
 BEGIN {
+    if(not eval "require RDF::Core") {
+        plan skip_all => 'RDF::Core required';
+    }
+
     $has_xml_xpath = not not eval { require XML::XPath; };
 
     %path_tests = (

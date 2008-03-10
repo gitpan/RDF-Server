@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 18;
 
 BEGIN {
   use_ok( 'RDF::Server::Formatter::RDF' );
@@ -24,11 +24,29 @@ isa_ok( $doc2, 'RDF::Server::XMLDoc' );
 
 isa_ok( $doc, 'RDF::Server::XMLDoc' );
 
-my $ns = { };
+$root -> setNamespace( 'http://www.example.com/blank/', '' );
+
+my %ns = ( 'http://www.example.com/blank/' => '' );
+
+my $ns = \%ns;
+
+is( $ns -> {'http://www.example.com/blank/'}, '' );
 
 RDF::Server::Formatter::RDF -> _define_namespace($root, $ns, 'http://example.com/foo/', 'foo');
 
 is( $ns -> {'http://example.com/foo/'}, 'foo' );
+
+ok( defined($$ns{'http://example.com/foo/'}) && $$ns{'http://example.com/foo/'} eq 'foo', 'defined and not blank');
+
+RDF::Server::Formatter::RDF -> _define_namespace($root, $ns, 'http://example.com/foo/', 'fooo');
+
+is( $ns -> {'http://example.com/foo/'}, 'foo' );
+
+ok( defined($ns -> {'http://www.example.com/blank/'}) && $ns -> {'http://www.example.com/blank/'} eq '', 'defined but blank');
+
+RDF::Server::Formatter::RDF -> _define_namespace($root, $ns, 'http://www.example.com/blank/', 'blank');
+
+is( $ns -> {'http://www.example.com/blank/'}, 'blank' );
 
 RDF::Server::Formatter::RDF -> _import_as_child_of(
     RDF::Server::XMLDoc -> new( $doc ),

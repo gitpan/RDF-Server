@@ -62,15 +62,35 @@ RDF::Server::Semantic::Atom::Service - supports use of Atom service documents
      )
  ;
 
+or (if using the Atom semantic):
+
+ my $server = new My::Server
+    handler => [ service => {
+        uri_prefix => '/',
+        workspaces => [
+           { ..., collections => [ ... ] },
+           { ..., collections => [ ... ] },
+        ],
+    } ]
+ ;
+
 =head1 DESCRIPTION
 
 =head1 METHODS
 
 =over 4
 
-=item to_xml
+=item render
 
 Returns an app:service XML document.
+
+=item data
+
+Returns a Perl data structure containing information about the service's
+workspaces.  The returned value is a hash reference with the single key
+C<workspaces> that maps to an array reference listing the data structures
+returned by the C<data> method on the RDF::Server::Semantic::Atom::Workspace
+handler objects.
 
 =back
 

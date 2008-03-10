@@ -7,13 +7,15 @@ use Sub::Exporter;
 use Sub::Name 'subname';
 use Class::MOP ();
 use MooseX::Types::Moose qw( ArrayRef );
+use Storable ();
 
-our $VERSION='0.01';
+our $VERSION='0.02';
 
 has 'handler' => (
     is => 'rw',
     isa => Handler,
     required => 1,
+    coerce => 1
 );
 
 has default_renderer => (
@@ -104,28 +106,8 @@ has default_renderer => (
                 my $class = $CALLER;
                 return subname 'RDF::Server::render' => sub ($$) {
                     my($extension, $as) = @_;
-                    # format $ext => $as
-                    # RDF::Server::Format::$as to_rdf from_rdf
-                    my $formatter;
-                    $extension = [ $extension ] unless is_ArrayRef( $extension );
-                    if( _load_class( "RDF::Server::Formatter::$as" ) ) {
-                        $formatter = "RDF::Server::Formatter::$as";
-                    }
-                    elsif( _load_class($as) ) 
-                    {
-                        $formatter = $as;
-                    }
-                    if( is_Formatter( $formatter ) ) {
-                        no strict 'refs';
-                        @{$class . '::FORMATTERS'}{@$extension} = $formatter;
-                    }
-                    elsif( $formatter ) {
-                        confess "$formatter does not fill the RDF::Server::Formatter role";
-                        }
-                    else {
-                        confess "Unable to load $as";
-                    }
-                };
+                    $class -> set_renderer( $extension, $as);
+                }
             },
         );
 
@@ -203,13 +185,87 @@ sub formatter {
     elsif( _load_class($r) ) {
         return $r;
     }
+    else {
+        throw RDF::Server::Exception::NotFound;
+    }
 }
 
+sub set_renderer {
+    my($self, $extension, $as) = @_;
+
+    my $class = $self -> meta -> name;
+
+    my $formatter;
+    $extension = [ $extension ] unless is_ArrayRef( $extension );
+    if( _load_class( "RDF::Server::Formatter::$as" ) ) {
+        $formatter = "RDF::Server::Formatter::$as";
+    }
+    elsif( _load_class($as) ) {
+        $formatter = $as;
+    }
+    if( is_Formatter( $formatter ) ) {
+        no strict 'refs';
+        @{$class . '::FORMATTERS'}{@$extension} = $formatter;
+    }
+    elsif( $formatter ) {
+        confess "$formatter does not fill the RDF::Server::Formatter role";
+    }
+    else {
+        confess "Unable to load $as";
+    }
+};
+
+
+{
+my $built_class = 1;
+sub build_from_config {
+    my $super = shift;
+
+    my %c = %{ Storable::dclone(+{ @_ }) };
+
+    # $c -> {protocol,interface,semantic}
+    # $c -> {with} -> [ ]
+    # $c -> {renders} -> { }
+    my $class = 'RDF::Server::Class::__ANON__::SERIAL::' . $built_class;
+
+    eval "package $class; use Moose; extends 'RDF::Server';";
+
+    #$class -> meta -> _fix_metaclass_incompatabiity( $super );
+    #$class -> meta -> superclasses( $super );
+
+    Moose::Util::apply_all_roles($class -> meta, @{delete $c{with}})
+        if $c{with};
+
+    _map_classes($class, 'RDF::Server::Interface', \&is_Interface, 'does not fill the RDF::Server::Interface role', delete $c{interface}) if $c{interface};
+    _map_classes($class, 'RDF::Server::Protocol', \&is_Protocol, 'does not fill the RDF::Server::Protocol role', delete $c{protocol}) if $c{protocol};
+    _map_classes($class, 'RDF::Server::Semantic', \&is_Semantic, 'does not fill the RDF::Server::Semantic role', delete $c{semantic}) if $c{semantic};
+
+    # now manage renderings
+    $class -> set_renderer( $_ => $c{renderers}->{$_} )
+        foreach ( keys %{ $c{renderers} } );
+
+    delete $c{renderers};
+
+    $class -> meta -> add_around_method_modifier( 'new', sub {
+        my($method, $class, %config) = @_;
+
+        #use Data::Dumper;
+        #print STDERR "method: $method\n";
+        #print STDERR "class: $class\nconfig: ", Data::Dumper -> Dump([ \%config ]);
+        #print STDERR "pre-defined data: ", Data::Dumper -> Dump([ \%c ]);
+        $class -> $method(%c, %config);
+    } );
+
+    return $class;
+}
+}
 1;
 
 __END__
 
 =pod
+
+=for readme stop
 
 =head1 NAME
 
@@ -217,12 +273,12 @@ RDF::Server - toolkit for building RDF servers
 
 =head1 SYNOPSIS
 
- # Define basic server behavior:
+Build your own package:
 
  package My::Server;
 
  use RDF::Server;
- with 'MooseX::Daemonize';
+ with 'MooseX::Getopt';
 
  interface 'REST';
  protocol  'HTTP';
@@ -236,7 +292,50 @@ RDF::Server - toolkit for building RDF servers
  my $daemon = My::Server -> new( ... );
      
  $daemon -> run();
-                        
+
+Build your server class at run-time:
+
+ use RDF::Server ();
+
+ my $class = RDF::Server -> build_from_config({
+     interface => 'REST',
+     protocol => 'HTTP',
+     semantic => 'Atom',
+     renderers => { 
+         xml => 'Atom',
+         rss => 'RDF'
+     },
+     with => [qw(
+         MooseX::Getopt
+     )]
+ });
+
+ my $daemon = $class -> new( ... );
+
+ $daemon -> run();
+
+=for readme continue
+
+=begin readme
+
+                             RDF::Server 0.02
+
+                      toolkit for building RDF servers
+
+=head1 INSTALLATION
+
+Installation follows standard Perl CPAN module installation steps:
+
+ cpan> install RDF::Server
+
+or, if not using the CPAN tool, then from within the unpacked distribution:
+
+ % perl Makefile.PL
+ % make
+ % make test
+ % make install
+
+=end readme
 
 =head1 DESCRIPTION
 
@@ -244,6 +343,14 @@ RDF::Server provides a flexible framework with which you can design
 your own RDF service.  By dividing itself into several areas of responsibility,
 the framework allows you to mix and match any capabilities you need to create
 the service that fits your RDF data and how you need to access it.
+
+=begin readme
+
+The C<rdf-server> script is installed as an easy-to-use way of building and
+running an RDF::Server service.  Some sample configuration files are in the
+C<examples> directory of the RDF::Server distribution.
+
+=end readme
             
 The framework identifies four areas of responsibility:
             
@@ -280,8 +387,9 @@ contained in the various documents and the heirarchy of resources
 available through the interface modules.  Most of the content handlers 
 are attached to a particular semantic.
 
-The available semantic is:
-L<RDF::Server::Semantic::Atom>.
+The available semantics are:
+L<RDF::Server::Semantic::Atom>,
+L<RDF::Server::Semantic::RDF>.
 
 =head2 Formatters
 
@@ -292,6 +400,97 @@ The available formatters are:
 L<RDF::Server::Formatter::Atom>,
 L<RDF::Server::Formatter::JSON>,
 L<RDF::Server::Formatter::RDF>.
+
+=for readme stop
+
+=head1 SERVER CONFIGURATION
+
+An RDF::Server server is configured in a two-step process.  The initial
+configuration determins the fundamental behavior of the server by bringing
+together the appropriate protocol, interface, and semantic roles.  The
+second phase then configures the various information needed for these
+roles to perform.
+
+The initial configuration can be done either as a Perl package and 
+read at compile time or built at run time using a static method.  The
+run time option can be as flexible as the Perl package method, but
+you will need to use roles to extend server functionality.
+
+=head2 Building a Package
+
+When you use RDF::Server in a package other than main, it will have
+Moose import into the package and set itself as the package's superclass.
+It will also import the various class methods detailed below.
+
+As shown in the synopsis:
+
+ package My::Server;
+
+ use RDF::Server;
+ with 'MooseX::Getopt';
+
+ interface 'REST';
+ protocol  'HTTP';
+ semantic  'Atom';
+
+ render xml => 'Atom';
+ render rss => 'RDF';
+
+This sets up the various roles needed to create a complete server.
+
+With the addition of a run time option for configuring this information,
+rendering information can also be set at run time after the class has been
+defined, using the C<set_renderer> method.
+
+=head2 Building from Configuration
+
+If you use RDF::Server but don't allow its import method to be called, then
+you can use its static methods to build a class at run time based on a
+configuration file or other information determined at run time.
+
+As shown in the synopsis:
+
+ use RDF::Server ();
+
+ my $class = RDF::Server -> build_from_config(
+     interface => 'REST',
+     protocol => 'HTTP',  
+     semantic => 'Atom',
+     renderers => {
+         xml => 'Atom',
+         rss => 'RDF'
+     },
+     with => [qw(
+         MooseX::Getopt
+     )],
+     port => '8000',
+ );
+
+The C<build_from_config> static method will construct a class with the
+appropriate roles based on the configuration information passed in.  
+
+Any information that isn't associated with the C<interface>, C<protocol>, 
+C<semantic>, C<renderers>, or C<with> keys is cached and serves as the
+default values when an object of the class is instantiated.  In the above
+example, the default port is changed to 8000 instead of the usual default
+of 8080.
+
+=head1 STATIC METHODS
+
+=over 4
+
+=item new
+
+=item build_from_config
+
+=item set_renderer ($extension, $class)
+
+Each class has a class-global mapping of resource extension to 
+rendering class.  In addition to allowing renderers to be set at
+compile time via the C<render> method, this method can be called at
+run time to modify the mapping.
+
+=back
 
 =head1 CLASS METHODS
 
@@ -320,8 +519,8 @@ Default is RDF::Server::Interface::REST.
 
 The protocol is how the RDF server communicates with the world.
 
-Available protocols: Embedded, HTTP.  
-(Apache2 and FastCGI are on the TODO list.)
+Available protocols: Embedded, HTTP.  FCGI is experimental.
+(Apache2 is on the TODO list.)
 
 Default is RDF::Server::Protocol::Embedded.
 
@@ -330,7 +529,7 @@ Default is RDF::Server::Protocol::Embedded.
 The server semantic determines how the RDF stores are structured and 
 presented in documents by managing how the handler is configured.
 
-Available semantics: Atom.
+Available semantics: Atom, RDF.
 
 Default is RDF::Server::Semantic::Atom.
 
@@ -372,6 +571,8 @@ configure the handler from a configuration file or Perl data structure.
 
 =back
 
+=for readme continue
+
 =head1 NAMESPACE DESIGN
 
 The RDF::Server namespace is divided into these broad areas:
@@ -402,15 +603,17 @@ Interface module.
 
 =item Model
 
-RDF::Server:Model modules interface between the Semantic and Formatter 
+RDF::Server::Model modules interface between the Semantic and Formatter 
 modules and the backend triple store.
 
 =item Resource
 
-RDF::Server:Resource modules represent particular resources and associated 
+RDF::Server::Resource modules represent particular resources and associated 
 data within a triple store.
 
 =back
+
+=for readme stop
 
 =head1 SEE ALSO
 
@@ -421,6 +624,14 @@ L<RDF::Server::Model>,
 L<RDF::Server::Protocol>,
 L<RDF::Server::Resource>,
 L<RDF::Server::Semantic>.
+
+=for readme continue
+
+=head1 BUGS
+
+There are bugs.  The test suite only covers a little over 90% of the code.
+Bugs may be reported on rt.cpan.org or by e-mailing bug-RDF-Server at
+rt.cpan.org.
 
 =head1 AUTHOR
         

@@ -4,10 +4,13 @@ BEGIN {
     eval "use RDF::Core::Model";
     plan skip_all => 'RDF::Core required' if $@;
 
-    plan tests => 17;
+    plan tests => 34;
 
     use_ok('RDF::Server::Model::RDFCore');
 }
+
+use MooseX::Types::Moose qw( ArrayRef );
+use RDF::Server::Constants qw( ATOM_NS RDF_NS );
 
 my $model;
 
@@ -22,6 +25,12 @@ is( $@, '', 'Model object created');
 is( $model -> namespace, 'http://example.com/ns/', 'namespace set' );
 
 isa_ok( $model -> store, 'RDF::Core::Model' );
+
+###
+# get_value
+###
+
+is( $model -> get_value, undef, 'get_value returns undef' );
 
 ###
 # _make_resource
@@ -42,18 +51,9 @@ isa_ok( $r, 'RDF::Core::Resource' );
 # load model with some stuff
 ###
 
-use RDF::Core::Parser;
 use RDF::Server::Constants qw( :ns );
 
-my $parser = RDF::Core::Parser -> new(
-    Assert => sub {
-        my $stmt = RDF::Server::Resource::RDFCore -> _triple(@_);
-        $model -> store -> addStmt( $stmt );
-    },
-    BaseURI => $model -> namespace
-);
-
-$parser -> parse(<<eoRDF);
+$model -> update(<<eoRDF);
 <?xml version="1.0" ?>
 <rdf:RDF xmlns:rdf="@{[ RDF_NS ]}"
          xmlns:x="http://example.com/ns/"
@@ -65,8 +65,16 @@ $parser -> parse(<<eoRDF);
   <rdf:Description rdf:about="http://example.com/ns/bar">
     <x:title>Bar's Title</x:title>
   </rdf:Description>
+
+  <rdf:Description rdf:about="http://www.example.com/ns2/0956">
+    <x:title>Something for 0956</x:title>
+  </rdf:Description>
 </rdf:RDF>
 eoRDF
+
+my $data = $model -> data;
+ok( is_ArrayRef( $data ) );
+is( scalar( @$data ), 3, "three entries in model" );
 
 ###
 # has_triple
@@ -114,3 +122,92 @@ isa_ok( $resources[1], 'RDF::Server::Resource::RDFCore' );
 my $ids = join ':::', sort map { $_ -> id } @resources;
 
 is( $ids, 'bar:::foo', 'Resource ids are right' );
+
+$iter = $model -> resources('http://www.example.com/ns2/');
+
+ok( is_iterator($iter), 'resources($ns) returns an iterator' );
+
+@resources = @{ list $iter };
+is( scalar(@resources), 1, 'One resource' );
+
+$ids = join ':::', sort map { $_ -> id } @resources;
+
+is( $ids, '0956', 'Resource ids are right' );
+
+$iter = $model -> resources('');
+
+ok( is_iterator($iter), "resources('') returns an iterator" );
+
+@resources = @{ list $iter };
+
+is( scalar( @resources ), 3, 'Three resources' );
+
+
+###
+# add_triple
+###
+
+# the following should all result in the triple *not* being added
+eval { $model -> add_triple( undef, undef, undef ); };
+is( $@, '', "trying to add undef triple doesn't cause an error" );
+
+eval { $model -> add_triple( [ $model -> namespace, 'foo' ], undef, undef ); };
+
+is( $@, '', "trying to add undef triple doesn't cause an error" );
+
+eval { $model -> add_triple( [ $model -> namespace, 'foo' ], [ ATOM_NS, 'title' ], undef ); };
+is( $@, '', "trying to add undef triple doesn't cause an error" );
+
+
+$model -> add_triple(
+    RDF::Core::Resource -> new( $model -> namespace, 'foo' ),
+    RDF::Core::Resource -> new( ATOM_NS, 'title' ),
+    RDF::Core::Literal -> new( 'An Atomic Title' )
+);
+
+ok( $model -> store -> existsStmt(
+    RDF::Core::Resource -> new( $model -> namespace, 'foo' ),
+    RDF::Core::Resource -> new( ATOM_NS, 'title' ),
+    RDF::Core::Literal -> new( 'An Atomic Title' )
+), 'Adding triple using RDF::Core objects works' );
+
+ok( $model -> has_triple( [ $model -> namespace, 'foo' ], [ ATOM_NS, 'title' ], 'An Atomic Title' ) );
+
+###
+# purge
+###
+
+$model -> purge(<<eoRDF);
+<?xml version="1.0" ?>
+<rdf:RDF xmlns:rdf="@{[ RDF_NS ]}"
+         xmlns:atom="@{[ ATOM_NS ]}"
+         xmlns:x="http://example.com/ns/"
+>
+  <rdf:Description rdf:about="http://example.com/ns/foo">
+    <x:title>Foo's Title</x:title>
+    <atom:title>An Atomic Title</atom:title>
+  </rdf:Description>
+</rdf:RDF>
+eoRDF
+
+$iter = $model -> resources;
+
+@resources = @{ list $iter };
+
+is( scalar(@resources), 1, 'Only one resource');
+
+is( $resources[0] -> id, 'bar', 'Bar is the remaining resource');
+
+ok( !$model -> resource_exists( $model -> namespace, 'foo' ) );  
+
+###
+# delete
+###
+
+$model -> delete;
+
+$iter = $model -> resources('');
+
+@resources = @{ list $iter };
+
+is( scalar(@resources), 0, 'Model is empty after delete' );
