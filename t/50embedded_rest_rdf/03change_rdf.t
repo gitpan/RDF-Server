@@ -1,10 +1,11 @@
 use Test::More;
+eval "use Carp::Always"; # for those who don't have it
 
 if( not eval 'require RDF::Core' ) {
     plan skip_all => 'RDF::Core required to run tests';
 }
 
-plan tests => 7;
+plan tests => 6;
 
 use t::lib::EmbeddedRestRDFServer;
 use RDF::Server::Constants qw( RDF_NS ATOM_NS );
@@ -28,19 +29,31 @@ my $server = EmbeddedRestRDFServer -> new(
   }]
 );
 
-my $empty_json = $server -> fetch( "/foo/.json" );
+my($empty_json, $loaded_json);
 
-isnt( $empty_json, '' );
+SKIP: {
+    skip "JSON::Any required for JSON tests", 2 
+        unless not not eval "require JSON::Any";
 
-is( $empty_json, '{}' );
+    $empty_json = $server -> fetch( "/foo/.json" );
 
-my $loaded_doc = $server -> update( "/foo/", join("\n", Path::Class::File->new('t/data/AirportCodes.daml') -> slurp( chomp => 1 )));
+    isnt( $empty_json, '' );
 
-my $loaded_json = $server -> fetch( "/foo/.json" );
+    is( $empty_json, '{}' );
+}
 
-isnt( $loaded_json, $empty_json );
+    $loaded_doc = $server -> update( "/foo/", join("\n", Path::Class::File->new('t/data/AirportCodes.daml') -> slurp( chomp => 1 )));
 
-like( $loaded_json, qr{Albuquerque International Airport}, 'Document references Albuquerque' );
+SKIP: {
+    skip "JSON::Any required for JSON tests", 1 
+        unless not not eval "require JSON::Any";
+
+    $loaded_json = $server -> fetch( "/foo/.json" );
+
+    isnt( $loaded_json, $empty_json );
+}
+
+like( $loaded_doc, qr{Albuquerque International Airport}, 'Document references Albuquerque' );
 
 $server -> delete( "/foo/", <<eoRDF);
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -56,15 +69,13 @@ $server -> delete( "/foo/", <<eoRDF);
 </rdf:RDF>
 eoRDF
 
-my $no_abq = $server -> fetch( "/foo/.json" );
+my $no_abq = $server -> fetch( "/foo/" );
 
 unlike( $no_abq, qr{Albuquerque International Airport}, "Document no longer references Albuquerque" );
 
 my($loc, $created_doc) = $server -> create('/foo/', join("\n", Path::Class::File->new('t/data/AirportCodes.daml') -> slurp( chomp => 1 )));
 
-$loaded_json = $server -> fetch( "/foo/.json" );
+$loaded_doc = $server -> fetch( "/foo/" );
 
-isnt( $loaded_json, $empty_json );
-
-like( $loaded_json, qr{Albuquerque International Airport}, 'Document references Albuquerque again' );
+like( $loaded_doc, qr{Albuquerque International Airport}, 'Document references Albuquerque again' );
 

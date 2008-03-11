@@ -8,6 +8,7 @@ BEGIN {
 use RDF::Server::Types qw( Exception );
 use RDF::Server::Constants qw( RDF_NS DC_NS ATOM_NS );
 use Iterator::Simple qw(iter);
+eval "use Carp::Always"; # for those who don't have it
 
 # this formatter does not want rdf
 ok( RDF::Server::Formatter::Atom -> wants_rdf );

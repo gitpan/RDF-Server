@@ -14,6 +14,7 @@ BEGIN {
 use RDF::Core::Parser;
 use RDF::Server::Constants qw( :ns );
 use MooseX::Types::Moose qw( ArrayRef );
+eval "use Carp::Always"; # for those who don't have it
 
 my $model = RDF::Server::Model::RDFCore -> new(
     namespace => 'http://example.com/ns/'

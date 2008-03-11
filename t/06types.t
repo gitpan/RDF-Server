@@ -1,6 +1,7 @@
 use Test::More;
 use MooseX::Types::Moose qw( :all );
 use RDF::Server;
+eval "use Carp::Always"; # for those who don't have it
 
 my %tests;
 

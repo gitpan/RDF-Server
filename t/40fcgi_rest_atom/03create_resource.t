@@ -1,6 +1,7 @@
 use Test::More;
 #use lib 't/lib';
 use t::lib::utils;
+eval "use Carp::Always"; # for those who don't have it
 
 my $lighttpd;
 BEGIN {
@@ -75,11 +76,16 @@ my $loc = $resp -> header('Location');
 
 $loc =~ s{www.example.com}{localhost:$PORT};
 
-$req = HTTP::Request -> new(GET => "$loc.json");
-my $jresp = $UA -> request( $req );
+SKIP: {
+    skip "JSON::Any required for JSON tests", 2 
+        unless not not eval "require JSON::Any";
 
-is( $jresp -> code, 200, "GET $loc.json");
-is( $jresp -> header('Content-Type'), 'application/json' );
+    $req = HTTP::Request -> new(GET => "$loc.json");
+    my $jresp = $UA -> request( $req );
+
+    is( $jresp -> code, 200, "GET $loc.json");
+    is( $jresp -> header('Content-Type'), 'application/json' );
+}
 
 $req = HTTP::Request -> new(GET => "$loc.rdf");
 my $rresp = $UA -> request( $req );

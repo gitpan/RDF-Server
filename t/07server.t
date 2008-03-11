@@ -1,6 +1,7 @@
 use Test::More tests => 8;
 use Test::Moose;
 use RDF::Server;
+eval "use Carp::Always"; # for those who don't have it
 
 ##
 # test things that aren't in other tests
@@ -13,7 +14,6 @@ my $class = RDF::Server -> build_from_config(
     renderers => {
         'rdf' => 'RDF',
         'atom' => 'Atom',
-        'json' => 'JSON'
     },
     port => '8000',
     loglevel => 2

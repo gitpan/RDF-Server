@@ -2,6 +2,7 @@ use Test::More;
 #use lib 't/lib';
 
 use t::lib::utils;
+eval "use Carp::Always"; # for those who don't have it
 
 my $lighttpd;
 BEGIN {

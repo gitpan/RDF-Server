@@ -1,5 +1,6 @@
 use Test::More;
 use Test::Moose;
+eval "use Carp::Always"; # for those who don't have it
 
 BEGIN {
 

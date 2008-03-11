@@ -5,6 +5,7 @@ use HTTP::Response;
 use HTTP::Request;
 
 use RDF::Server::Constants qw( :ns );
+eval "use Carp::Always"; # for those who don't have it
 
 BEGIN {
     if(not eval "require RDF::Core") {

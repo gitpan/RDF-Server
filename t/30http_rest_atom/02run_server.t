@@ -15,6 +15,7 @@ BEGIN {
 }
 
 use t::lib::HTTPRestAtomServer;
+eval "use Carp::Always"; # for those who don't have it
 
 my $PORT = 2080;
 

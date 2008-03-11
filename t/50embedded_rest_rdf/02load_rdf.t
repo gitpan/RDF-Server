@@ -1,4 +1,5 @@
 use Test::More;
+eval "use Carp::Always"; # for those who don't have it
 
 if( not eval 'require RDF::Core' ) {
     plan skip_all => 'RDF::Core required to run tests';

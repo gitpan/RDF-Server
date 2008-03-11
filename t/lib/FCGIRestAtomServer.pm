@@ -8,7 +8,11 @@ semantic 'Atom';
 
 render xml => 'Atom';
 render rdf => 'RDF';
-render json => 'JSON';
+
+if( not not eval "require JSON::Any" ) {
+    render 'json' => 'JSON';
+}
+
 
 use LWP::UserAgent;
 use t::lib::utils;

@@ -14,6 +14,7 @@ BEGIN {
 };
 
 use RDF::Server::Types qw( Protocol Interface Semantic Container );
+eval "use Carp::Always"; # for those who don't have it
 
 my $e;
 

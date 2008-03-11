@@ -11,6 +11,7 @@ BEGIN {
 
 use MooseX::Types::Moose qw( ArrayRef );
 use RDF::Server::Constants qw( ATOM_NS RDF_NS );
+eval "use Carp::Always"; # for those who don't have it
 
 my $model;
 

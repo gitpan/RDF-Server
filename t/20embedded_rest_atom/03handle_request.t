@@ -4,7 +4,7 @@ use Test::More;
 use HTTP::Response;
 use HTTP::Request;
 
-use Carp::Always;
+eval "use Carp::Always"; # for those who don't have it
 
 my( %service_path_tests, %service_path_counts, $has_xml_path );
 my( %collection_path_tests, %collection_path_counts );

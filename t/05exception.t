@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More; # tests => 9;
+eval "use Carp::Always"; # for those who don't have it
 
 use RDF::Server::Types qw( Exception );
 

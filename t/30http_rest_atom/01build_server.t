@@ -1,4 +1,5 @@
 use Test::More;
+eval "use Carp::Always"; # for those who don't have it
 
 BEGIN {
 

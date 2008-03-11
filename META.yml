@@ -2,6 +2,7 @@
 abstract: toolkit for building RDF servers
 author: James Smith, C<< <jsmith@cpan.org> >>
 build_requires: 
+  Path::Class::File: 0
   Test::Moose: 0
   Test::More: 0
 distribution_type: module
@@ -29,5 +30,6 @@ requires:
   Sub::Name: 0
   XML::LibXML: 0
   XML::Simple: 0
-tests: t/*.t t/*/*.t
-version: 0.02
+  perl: 5.8.0
+tests: t/*.t t/*/*.t xt/*.t
+version: 0.03

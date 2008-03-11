@@ -6,6 +6,7 @@ BEGIN {
 };
 
 use RDF::Server::Types qw( Protocol Interface Formatter );
+eval "use Carp::Always"; # for those who don't have it
 
 my $e;
 

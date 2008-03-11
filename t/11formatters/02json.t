@@ -12,6 +12,7 @@ BEGIN {
 }
 
 use RDF::Server::Types qw( Exception );
+eval "use Carp::Always"; # for those who don't have it
 
 # this formatter does not want rdf
 ok( !RDF::Server::Formatter::JSON -> wants_rdf );

@@ -1,7 +1,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 19;
+eval "use Carp::Always"; # for those who don't have it
+
+use Test::More tests => 20;
 
 BEGIN {
 use_ok 'RDF::Server::Interface';
@@ -40,8 +42,24 @@ SKIP: {
 }
 
 SKIP: {
-    skip 'FCGI::Engine not found', 1 unless not not eval 'require FCGI::Engine';
+    foreach my $m (qw(
+        FCGI Log::Handler MooseX::Daemonize
+    )) {
+        skip("$m not found", 1) && last 
+            unless not not eval "require $m";
+    }
 
     use_ok( 'RDF::Server::Protocol::FCGI' );
+}
+
+SKIP: {
+    foreach my $m (qw(
+        POE::Component::Server::HTTP Log::Handler MooseX::Daemonize
+    )) {
+        skip("$m not found", 1) && last 
+            unless not not eval "require $m";
+    }
+
+    use_ok( 'RDF::Server::Protocol::HTTP' );
 }
 }

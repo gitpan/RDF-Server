@@ -8,7 +8,10 @@ semantic 'RDF';
 
 render 'xml' => 'RDF';
 render 'atom' => 'Atom';
-render 'json' => 'JSON';
+
+if( not not eval "require JSON::Any" ) {
+    render 'json' => 'JSON';
+}
 
 1;
 

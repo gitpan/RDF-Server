@@ -5,6 +5,7 @@ BEGIN {
 }
 
 use RDF::Server::Constants qw( RDF_NS );
+eval "use Carp::Always"; # for those who don't have it
 
 # this formatter wants rdf
 ok( RDF::Server::Formatter::RDF -> wants_rdf );

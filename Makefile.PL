@@ -49,6 +49,7 @@ requires 'DateTime';
 
 requires 'XML::LibXML';
 
+
 ###
 # for Model
 ###
@@ -63,6 +64,7 @@ requires 'XML::Simple';
 
 build_requires 'Test::More';
 build_requires 'Test::Moose';
+build_requires 'Path::Class::File';
 
 
 tests('t/*.t t/*/*.t');

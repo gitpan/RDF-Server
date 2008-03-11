@@ -1,4 +1,10 @@
-0.02  -   9 Mar 2008
+0.03  -  11 Mar 2008
+--------------------
+
+Modified tests to check better for dependencies before running tests.
+
+
+0.02  -  10 Mar 2008
 --------------------
 
 Updated to work with recent releases of Moose (0.38) and Class::MOP (0.53)

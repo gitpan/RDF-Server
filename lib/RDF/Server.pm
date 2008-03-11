@@ -9,7 +9,9 @@ use Class::MOP ();
 use MooseX::Types::Moose qw( ArrayRef );
 use Storable ();
 
-our $VERSION='0.02';
+use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
+
+our $VERSION='0.03';
 
 has 'handler' => (
     is => 'rw',
@@ -318,7 +320,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.02
+                             RDF::Server 0.03
 
                       toolkit for building RDF servers
 
