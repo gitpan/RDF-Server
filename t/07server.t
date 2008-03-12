@@ -43,9 +43,13 @@ ok( $server -> meta -> get_attribute('port'), 'server meta has port attribute' )
 
 my $p = eval { $server -> port; };
 
-if( $@ =~ m{Can't locate object method "port"} && $ENV{'AUTOMATED_TESTING'} ) {
+if($@ =~ m{Can't locate object method "port"} && $ENV{'AUTOMATED_TESTING'} ) {
     print STDERR "AUTOMATED TESTING info:\n";
     print STDERR "  server object: $server:\n";
+    print STDERR "  attributes: ", join(", ",
+        #map { $_ -> name } $server -> meta -> computer_all_applicable_attributes
+        $server -> meta -> get_attribute_list
+    ), "\n";
 }
 
 is( $p, '8000' );

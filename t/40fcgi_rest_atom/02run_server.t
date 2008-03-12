@@ -22,8 +22,6 @@ BEGIN {
       plan skip_all => "Testing FCGI protocol requires $class"
           unless not not eval "require $class";
   }
-
-  plan tests => 4;
 }
 
 use t::lib::FCGIRestAtomServer;
@@ -49,6 +47,11 @@ my $UA = FCGIRestAtomServer -> fork_and_return_ua(
       }
     ]
 );
+
+# if socket doesn't exist at this point, we bail
+plan skip_all => 'Unable to create fastcgi server' unless $UA;
+
+plan tests => 4;
 
 ok( $UA, 'we have a user agent' );
 

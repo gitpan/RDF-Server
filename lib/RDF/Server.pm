@@ -11,7 +11,7 @@ use Storable ();
 
 use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
 
-our $VERSION='0.04';
+our $VERSION='0.05';
 
 has 'handler' => (
     is => 'rw',
@@ -31,7 +31,9 @@ has default_renderer => (
 {
     sub _load_class {
         my( $class ) = @_;
-        eval { Class::MOP::load_class($class); };
+        not $class
+        or not not eval "require $class"
+        and eval { Class::MOP::load_class($class); };
         return Class::MOP::is_class_loaded($class);
     }
 
@@ -135,7 +137,10 @@ has default_renderer => (
             #       MooseX::
 
 
-            if( _load_class('RDF::Server::Protocol::' . $addon) ) {
+            if( substr($addon, 0, 1) eq '+' && _load_class( substr($addon,1) ) ) {
+                $class = substr($addon, 1);
+            }
+            elsif( _load_class('RDF::Server::Protocol::' . $addon) ) {
                 $class = 'RDF::Server::Protocol::' . $addon;
             }
             elsif( _load_class('RDF::Server::Interface::' . $addon) ) {
@@ -150,17 +155,7 @@ has default_renderer => (
             elsif( _load_class($addon) ) {
                 $class = $addon;
             }
-            elsif( substr($addon, 0, 1) eq '+' && _load_class( substr($addon,1) ) ) {
-                $class = substr($addon, 1);
-            }
             else {
-                # some automated testers can't find the Atom semantic module
-                # can't be reproduced in development yet
-                if($ENV{'AUTOMATED_TESTING'} && $class eq 'RDF::Server::Semantic::Atom') {
-                    print STDERR "AUTOMATED TESTING info:\n";
-                    print STDERR "ls -aR: \n";
-                    print STDERR system(qw( ls -aR ));
-                }
                 confess "Unable to find $class";
                 next;
             }
@@ -258,10 +253,6 @@ sub build_from_config {
     $class -> meta -> add_around_method_modifier( 'new', sub {
         my($method, $class, %config) = @_;
 
-        #use Data::Dumper;
-        #print STDERR "method: $method\n";
-        #print STDERR "class: $class\nconfig: ", Data::Dumper -> Dump([ \%config ]);
-        #print STDERR "pre-defined data: ", Data::Dumper -> Dump([ \%c ]);
         $class -> $method(%c, %config);
     } );
 
@@ -327,7 +318,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.04
+                             RDF::Server 0.05
 
                       toolkit for building RDF servers
 

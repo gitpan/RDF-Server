@@ -48,8 +48,6 @@ sub fork_and_return_ua {
 
     my $SOCKET = $options{socket} || '/tmp/fcgi_rest_atom.socket';
 
-
-
     my $prev_pid = $$;
     $pid = fork;
     die "Unable to fork: $!" unless defined $pid;
@@ -76,8 +74,12 @@ sub fork_and_return_ua {
 
         utils::start_lighttpd('t/lighttpd_confs/fcgi_rest_atom.conf');
 
-        my $UA = LWP::UserAgent -> new;
-        return $UA;
+        if( -e $SOCKET ) {
+            return LWP::UserAgent -> new;
+        }
+        else {
+            return;
+        }
     }
     ######################################################################
     else {                          # we are the child

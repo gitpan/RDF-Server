@@ -21,8 +21,6 @@ BEGIN {
       plan skip_all => "Testing FCGI protocol requires $class"
           unless not not eval "require $class";
   }
-
-  plan tests => 12;
 }
 
 use t::lib::FCGIRestAtomServer;
@@ -50,7 +48,11 @@ my $UA = FCGIRestAtomServer -> fork_and_return_ua(
     ]
 );
 
-if( $UA ) {
+# if socket doesn't exist at this point, we bail
+plan skip_all => 'Unable to create fastcgi server' unless $UA;
+
+plan tests => 12;
+
 
 #diag "Pid: $$";
 my $req = HTTP::Request -> new(POST => "http://localhost:$PORT/");
@@ -140,5 +142,3 @@ $req = HTTP::Request -> new(GET => $loc);
 $resp = $UA -> request( $req );
 
 is( $resp -> code, 200, "GET $loc" );
-
-}

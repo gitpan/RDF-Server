@@ -1,6 +1,7 @@
 use Test::More;
 use MooseX::Types::Moose qw( :all );
 use RDF::Server;
+use Class::MOP;
 eval "use Carp::Always"; # for those who don't have it
 
 my %tests;
@@ -16,7 +17,7 @@ BEGIN {
 );
 
 foreach my $module ( keys %tests ) {
-    if( not not eval "require $module" ) {
+    if( eval { Class::MOP::load_class($module) } ) {
         $tests += $tests{$module};
         $module -> import(qw(:all));
     }

@@ -1,3 +1,12 @@
+0.05  -  12 Mar 2008
+--------------------
+
+Slight changes in ordering for testing existance of classes on
+RDF::Server->import()
+
+A bit more output when automated testing fails
+
+
 0.04  -  11 Mar 2008
 --------------------
 
