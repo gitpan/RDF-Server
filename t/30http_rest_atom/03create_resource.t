@@ -4,7 +4,6 @@ BEGIN {
   foreach my $class (qw(
       RDF::Core
       MooseX::Daemonize
-      Log::Handler
       POE::Component::Server::HTTP
   )) {
       plan skip_all => "Testing HTTP protocol requires $class"

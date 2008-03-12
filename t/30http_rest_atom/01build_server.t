@@ -6,14 +6,13 @@ BEGIN {
   foreach my $class (qw(
       RDF::Core
       MooseX::Daemonize
-      Log::Handler
       POE::Component::Server::HTTP
   )) {
       plan skip_all => "Testing HTTP protocol requires $class"
           unless not not eval "require $class";
   }
 
-  plan tests => 4;
+  plan tests => 3;
 
   use_ok('RDF::Server::Protocol::HTTP');
 
@@ -31,5 +30,3 @@ my $server = HTTPRestAtomServer -> new(
 );
 
 isa_ok( $server, 'HTTPRestAtomServer' );
-
-isa_ok( $server -> logger, 'Log::Handler' );

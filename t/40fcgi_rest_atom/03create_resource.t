@@ -16,7 +16,6 @@ BEGIN {
   foreach my $class (qw(
       RDF::Core
       FCGI
-      Log::Handler
       MooseX::Daemonize
   )) {
       plan skip_all => "Testing FCGI protocol requires $class"

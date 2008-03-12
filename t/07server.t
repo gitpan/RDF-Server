@@ -1,4 +1,4 @@
-use Test::More tests => 8;
+use Test::More tests => 9;
 use Test::Moose;
 use RDF::Server;
 eval "use Carp::Always"; # for those who don't have it
@@ -37,5 +37,15 @@ $server = $class -> new(
 
 is( $@, '' );
 
-is( $server -> port, '8000' );
-is( $server -> loglevel, 2 );
+isa_ok( $server, 'RDF::Server' );
+
+ok( $server -> meta -> get_attribute('port'), 'server meta has port attribute' );
+
+my $p = eval { $server -> port; };
+
+if( $@ =~ m{Can't locate object method "port"} && $ENV{'AUTOMATED_TESTING'} ) {
+    print STDERR "AUTOMATED TESTING info:\n";
+    print STDERR "  server object: $server:\n";
+}
+
+is( $p, '8000' );

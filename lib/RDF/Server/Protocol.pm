@@ -2,6 +2,26 @@ package RDF::Server::Protocol;
 
 use Moose::Role;
 
+sub log_request {
+    my($self, $request, $response) = @_;
+    # log the request and resulting return code
+    my $logger = Log::Log4perl -> get_logger($self -> meta -> name);
+#10.211.55.2 dev.local:81 - [08/Mar/2008:01:50:29 -0600] "GET /RDF-Server/cover_db/blib-lib-RDF-Server-Role-Mutable-pm.html HTTP/1.1" 200 3624 "http://dev.local:81/RDF-Server/cover_db/coverage.html" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en-us) AppleWebKit/523.15.1 (KHTML, like Gecko) Version/3.0.4 Safari/523.15"
+
+    my $request_string = $request -> method . ' ' . $request -> uri;
+    $request_string =~ s{\s+}{ }g;
+    $request_string =~ s{^\s+}{};
+    $request_string =~ s{\s+$}{};
+    $logger -> info(
+        sprintf('"%s" %3d %d', 
+                $request_string, 
+                $response -> code,
+                length( $response -> content || "" )
+        )
+    );
+}
+
+
 1;
 
 __END__

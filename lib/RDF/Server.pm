@@ -11,7 +11,7 @@ use Storable ();
 
 use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
 
-our $VERSION='0.03';
+our $VERSION='0.04';
 
 has 'handler' => (
     is => 'rw',
@@ -154,6 +154,13 @@ has default_renderer => (
                 $class = substr($addon, 1);
             }
             else {
+                # some automated testers can't find the Atom semantic module
+                # can't be reproduced in development yet
+                if($ENV{'AUTOMATED_TESTING'} && $class eq 'RDF::Server::Semantic::Atom') {
+                    print STDERR "AUTOMATED TESTING info:\n";
+                    print STDERR "ls -aR: \n";
+                    print STDERR system(qw( ls -aR ));
+                }
                 confess "Unable to find $class";
                 next;
             }
@@ -320,7 +327,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.03
+                             RDF::Server 0.04
 
                       toolkit for building RDF servers
 

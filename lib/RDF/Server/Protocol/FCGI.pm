@@ -5,7 +5,7 @@ with 'RDF::Server::Protocol';
 with 'MooseX::Daemonize';
 
 use FCGI;
-use Log::Handler;
+#use Log::Log4perl;
 
 use RDF::Server::Types qw( Exception );
 
@@ -15,27 +15,27 @@ has 'socket' => (
     required => 1
 );
 
-has logger => (
-    is => 'rw',
-    isa => 'Object',
-    lazy => 1,
-    noGetOpt => 1, 
-    default => \&_build_logger,
-);
+#has logger => (
+#    is => 'rw',
+#    isa => 'Object',
+#    lazy => 1,
+#    noGetOpt => 1, 
+#    default => \&_build_logger,
+#);
         
-has errorlog => (
-    is => 'rw',
-    isa => 'Str',
-    default => '*STDERR',
-    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-);
+#has errorlog => (
+#    is => 'rw',
+#    isa => 'Str',
+#    default => '*STDERR',
+#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
+#);
  
-has loglevel => (
-    is => 'rw',
-    isa => 'Int',
-    default => '4',
-    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-);
+#has loglevel => (
+#    is => 'rw',
+#    isa => 'Int',
+#    default => '4',
+#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
+#);
 
 after 'start' => sub {
     my $self = shift;
@@ -45,17 +45,17 @@ after 'start' => sub {
 
 no Moose::Role;
     
-sub _build_logger {
-    my $self = shift;
-    Log::Handler -> new (
-        filename => $self -> errorlog,
-        mode => 'append',
-        prefix => "[$0 $$] [<--LEVEL-->] ",
-        newline => 1,
-        maxlevel => $self -> loglevel,
-        debug => $self -> loglevel > 7 ? 1 : 0,
-    );
-}
+#sub _build_logger {
+#    my $self = shift;
+#    Log::Handler -> new (
+#        filename => $self -> errorlog,
+#        mode => 'append',
+#        prefix => "[$0 $$] [<--LEVEL-->] ",
+#        newline => 1,
+#        maxlevel => $self -> loglevel,
+#        debug => $self -> loglevel > 7 ? 1 : 0,
+#    );
+#}
 
 sub run {
     my($self) = @_;
@@ -107,6 +107,8 @@ sub run {
             }
         }
 #        print STDERR 'Status: ' . $resp -> as_string;
+        $self -> log_request($req, $resp);
+
         print 'Status: ' . $resp -> as_string;
     }
 }

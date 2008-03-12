@@ -24,7 +24,8 @@ requires:
   HTTP::Response: 0
   HTTP::Status: 0
   Iterator::Simple: 0.04
-  Moose: 0
+  Log::Log4perl: 0
+  Moose: 0.36
   MooseX::Types: 0
   Sub::Exporter: 0
   Sub::Name: 0
@@ -32,4 +33,4 @@ requires:
   XML::Simple: 0
   perl: 5.8.0
 tests: t/*.t t/*/*.t xt/*.t
-version: 0.03
+version: 0.04

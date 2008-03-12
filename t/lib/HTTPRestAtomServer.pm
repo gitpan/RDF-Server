@@ -14,6 +14,9 @@ if( not not eval "require JSON::Any" ) {
 }
 
 use LWP::UserAgent;
+use Log::Log4perl qw(:easy);
+
+Log::Log4perl -> easy_init($INFO);
 
 ###
 # for testing

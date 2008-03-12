@@ -7,7 +7,7 @@ with 'MooseX::Daemonize';
 
 use POE::Component::Server::HTTP ();
 use HTTP::Status qw(RC_OK RC_NOT_FOUND RC_METHOD_NOT_ALLOWED RC_INTERNAL_SERVER_ERROR);
-use Log::Handler;
+use Log::Log4perl;
 use HTTP::Request;
 use HTTP::Response;
 
@@ -28,27 +28,27 @@ has address => (
     default => '127.0.0.1',
 );
 
-has logger => (
-    is => 'rw',
-    isa => 'Object',
-    lazy => 1,
-    noGetOpt => 1,
-    default => \&_build_logger,
-);
+#has logger => (
+#    is => 'rw',
+#    isa => 'Object',
+#    lazy => 1,
+#    noGetOpt => 1,
+#    default => \&_build_logger,
+#);
 
-has errorlog => (
-    is => 'rw',
-    isa => 'Str',
-    default => '*STDERR',
-    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-);
+#has errorlog => (
+#    is => 'rw',
+#    isa => 'Str',
+#    default => '*STDERR',
+#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
+#);
 
-has loglevel => (
-    is => 'rw',
-    isa => 'Int',
-    default => '4',
-    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-);
+#has loglevel => (
+#    is => 'rw',
+#    isa => 'Int',
+#    default => '4',
+#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
+#);
 
 has uri_base => (
     is => 'ro',
@@ -89,17 +89,17 @@ after 'start' => sub {
 
 no Moose::Role;
 
-sub _build_logger {
-    my $self = shift;
-    Log::Handler -> new (
-        filename => $self -> errorlog,
-        mode => 'append',
-        prefix => "[$0 $$] [<--LEVEL-->] ",
-        newline => 1,
-        maxlevel => $self -> loglevel,
-        debug => $self -> loglevel > 7 ? 1 : 0,
-    );
-}
+#sub _build_logger {
+#    my $self = shift;
+#    Log::Handler -> new (
+#        filename => $self -> errorlog,
+#        mode => 'append',
+#        prefix => "[$0 $$] [<--LEVEL-->] ",
+#        newline => 1,
+#        maxlevel => $self -> loglevel,
+#        debug => $self -> loglevel > 7 ? 1 : 0,
+#    );
+#}
 
 sub handle {
     my($self, $request, $response) = @_;
@@ -122,6 +122,13 @@ sub handle {
           $response -> content( 'Uh oh! ' . $e );
         }
     }
+
+    # log the request and resulting return code
+    my $logger = Log::Log4perl -> get_logger($self -> meta -> name);
+#10.211.55.2 dev.local:81 - [08/Mar/2008:01:50:29 -0600] "GET /RDF-Server/cover_db/blib-lib-RDF-Server-Role-Mutable-pm.html HTTP/1.1" 200 3624 "http://dev.local:81/RDF-Server/cover_db/coverage.html" "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en-us) AppleWebKit/523.15.1 (KHTML, like Gecko) Version/3.0.4 Safari/523.15"
+
+    $self -> log_request($request, $response);
+
     return $response -> code;
 }
 

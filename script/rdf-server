@@ -2,6 +2,7 @@
 
 use RDF::Server;
 #use Carp::Always;
+use Log::Log4perl;
 
 my $options;
 eval {
@@ -24,6 +25,21 @@ my $class = RDF::Server -> build_from_config(
     pidfile => 'rdf-server',
     renderers => $options -> renderers
 );
+
+if( $options -> has_log4perl ) {
+    Log::Log4perl::init( \${options -> log4perl} );
+}
+elsif( -e $options->log4perl_from ) {
+    Log::Log4perl::init_and_watch( $options -> log4perl_from, 10 );
+}
+else {
+    Log::Log4perl::init( \q{
+        log4perl.category.RDF.Server    = INFO, Screen
+        log4perl.appender.Screen        = Log::Log4perl::Appender::Screen
+        log4perl.appender.Screen.stderr = 0
+        log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+    });
+}
 
 my $daemon;
 my $command;
@@ -84,6 +100,18 @@ has 'renderers' => (
     is => 'ro',
     isa => 'HashRef[Str]',
     default => sub { [ ] }
+);
+
+has 'log4perl' => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_log4perl'
+);
+
+has 'log4perl_from' => (
+    is => 'ro',
+    isa => 'Str',
+    default => sub { '/etc/log4perl.conf' }
 );
 
 }

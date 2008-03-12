@@ -3,6 +3,11 @@ use inc::Module::Install;
 name 'RDF-Server';
 all_from 'lib/RDF/Server.pm';
 
+if( $^O eq 'Win32' or $^O eq 'cygwin' ) {
+    print STDERR "\n   RDF::Server isn't developed on or expected to work on Windows\n\n";
+    exit 0 if $ENV{'AUTOMATED_TESTING'};
+}
+
 ##
 # TODO: offer choices for the following few
 ##
@@ -21,21 +26,19 @@ feature 'JSON Formatting',
 feature 'HTTP Protocol',
   -default => 0,
   'MooseX::Daemonize' => 0,
-  'POE::Component::Server::HTTP' => 0,
-  'Log::Handler' => 0;
+  'POE::Component::Server::HTTP' => 0;
 
 # for FastCGI protocol support
 feature 'FastCGI',
   -default => 0,
   'MooseX::Daemonize' => 0,
-  'Log::Handler' => 0,
   'FCGI' => 0;
 
 ###
 # Following are basic modules
 ###
 
-requires 'Moose';
+requires 'Moose' => 0.36; # at least 0.25 fails
 requires 'Class::MOP';
 requires 'Sub::Exporter';
 requires 'Sub::Name';
@@ -49,6 +52,7 @@ requires 'DateTime';
 
 requires 'XML::LibXML';
 
+requires 'Log::Log4perl';
 
 ###
 # for Model

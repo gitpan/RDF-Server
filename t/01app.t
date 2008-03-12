@@ -43,7 +43,7 @@ SKIP: {
 
 SKIP: {
     foreach my $m (qw(
-        FCGI Log::Handler MooseX::Daemonize
+        FCGI MooseX::Daemonize
     )) {
         skip("$m not found", 1) && last 
             unless not not eval "require $m";
@@ -54,7 +54,7 @@ SKIP: {
 
 SKIP: {
     foreach my $m (qw(
-        POE::Component::Server::HTTP Log::Handler MooseX::Daemonize
+        POE::Component::Server::HTTP MooseX::Daemonize
     )) {
         skip("$m not found", 1) && last 
             unless not not eval "require $m";

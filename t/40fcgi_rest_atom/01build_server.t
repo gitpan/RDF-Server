@@ -7,14 +7,13 @@ BEGIN {
   foreach my $class (qw(
       RDF::Core
       FCGI
-      Log::Handler
       MooseX::Daemonize
   )) {
       plan skip_all => "Testing FCGI protocol requires $class"
           unless not not eval "require $class";
   }
 
-  plan tests => 7;
+  plan tests => 6;
 
   use_ok('RDF::Server::Protocol::FCGI');
 
@@ -37,5 +36,3 @@ isa_ok( $server, 'FCGIRestAtomServer' );
 does_ok( $server, 'RDF::Server::Protocol::FCGI' );
 does_ok( $server, 'RDF::Server::Interface::REST' );
 does_ok( $server, 'RDF::Server::Semantic::Atom' );
-
-isa_ok( $server -> logger, 'Log::Handler' );
