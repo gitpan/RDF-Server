@@ -63,13 +63,13 @@ t/01app.t
 t/05exception.t
 t/06types.t
 t/07server.t
+t/08build_server.t
 t/10rdfcore/01model.t
 t/10rdfcore/02resource.t
 t/11formatters/01rdf.t
 t/11formatters/02json.t
 t/11formatters/03atom.t
 t/20embedded_rest_atom/01build_server.t
-t/20embedded_rest_atom/02build_atom_server.t
 t/20embedded_rest_atom/03handle_request.t
 t/20embedded_rest_atom/04create_resource.t
 t/20embedded_rest_atom/05update_resource.t

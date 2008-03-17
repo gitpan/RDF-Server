@@ -16,7 +16,7 @@ sub log_request {
         sprintf('"%s" %3d %d', 
                 $request_string, 
                 $response -> code,
-                length( $response -> content || "" )
+                length( $response -> content )
         )
     );
 }
@@ -47,6 +47,17 @@ creating and using HTTP::Request and HTTP::Response objects as needed.
 =head1 REQUIRED METHODS
 
 No methods are required by this role.
+
+=head1 PROVIDED METHODS
+
+=over 4
+
+=item log_request
+
+This method will log the protocol equivalen of the
+HTTP request, response code, and response content length.
+
+=back
 
 =head1 SEE ALSO
 

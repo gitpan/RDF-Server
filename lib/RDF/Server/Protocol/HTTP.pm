@@ -28,28 +28,6 @@ has address => (
     default => '127.0.0.1',
 );
 
-#has logger => (
-#    is => 'rw',
-#    isa => 'Object',
-#    lazy => 1,
-#    noGetOpt => 1,
-#    default => \&_build_logger,
-#);
-
-#has errorlog => (
-#    is => 'rw',
-#    isa => 'Str',
-#    default => '*STDERR',
-#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-#);
-
-#has loglevel => (
-#    is => 'rw',
-#    isa => 'Int',
-#    default => '4',
-#    trigger => sub { $_[0] -> logger( $_[0] -> _build_logger ) }
-#);
-
 has uri_base => (
     is => 'ro',
     isa => 'Str',
@@ -88,18 +66,6 @@ after 'start' => sub {
 
 
 no Moose::Role;
-
-#sub _build_logger {
-#    my $self = shift;
-#    Log::Handler -> new (
-#        filename => $self -> errorlog,
-#        mode => 'append',
-#        prefix => "[$0 $$] [<--LEVEL-->] ",
-#        newline => 1,
-#        maxlevel => $self -> loglevel,
-#        debug => $self -> loglevel > 7 ? 1 : 0,
-#    );
-#}
 
 sub handle {
     my($self, $request, $response) = @_;
@@ -178,15 +144,6 @@ Default: 127.0.0.1 (localhost)
 This is the port on which the server should listen.
 
 Default: 8080
-
-=item errorlog
-
-This is the filename (or one of *STDOUT, *STDERR) where errors are logged.
-
-=item loglevel
-
-The severity threshold above which errors are logged.  See L<Log::Handler>
-for the log levels.  Any log level above 7 will turn on debugging.
 
 =item uri_base
 

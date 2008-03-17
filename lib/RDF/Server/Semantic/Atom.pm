@@ -57,7 +57,6 @@ sub build_atomic_handler {
 
     if( !defined $info ) {
         confess "Unknown Atom ($semantic) document type: $type";
-        return;
     }
 
     my $class = $semantic . '::' . $info -> {'class'};

@@ -33,4 +33,4 @@ requires:
   XML::Simple: 0
   perl: 5.8.0
 tests: t/*.t t/*/*.t xt/*.t
-version: 0.05
+version: 0.06

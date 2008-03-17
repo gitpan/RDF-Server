@@ -4,9 +4,7 @@
   semantic="Atom"
   socket="/tmp/example_fcgi_rest_atom.socket"
   pidfile="/tmp/rdf-server.pid"
-  errorfile="/tmp/rdf-server.errors"
   default_renderer="Atom"
-  loglevel="3"
   foreground="1"
 >
   <renderers json="JSON" rdf="RDF" xml="Atom" />

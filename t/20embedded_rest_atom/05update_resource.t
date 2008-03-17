@@ -54,6 +54,10 @@ eval {
 
     use RDF::Server;
 
+    protocol 'Embedded';
+    interface 'REST';
+    semantic 'Atom';
+
     render xml => 'Atom';
 };
 
@@ -142,8 +146,6 @@ SKIP: {
    isnt( $response -> header('Location'), '', 'Location returned' );
 }
 
-#$request = HTTP::Request -> new( PUT => $response -> header('Location') );
-#$request -> content(<<eoATOM);
 $returned_content = $server -> update($response -> header('Location'), <<eoATOM);
 <?xml version="1.0"?>
 <entry xmlns="@{[ ATOM_NS ]}"
@@ -156,28 +158,9 @@ $returned_content = $server -> update($response -> header('Location'), <<eoATOM)
 </entry>
 eoATOM
 
-#$response = new HTTP::Response;
-
-#eval {
-#    $server -> handle_request( $request, $response );
-#};
-    
-#$e = $@;
-        
-#is( $e, '', 'Request made');   
-            
-#isa_ok( $response, 'HTTP::Response' );
-                
-#unless( $response -> is_success ) {
-#    diag $response -> content;
-#}
-
 SKIP: {
-    skip 'request not successful', 1 + ($has_xml_xpath ? (keys(%path_tests) + keys(%path_counts)) : 0) unless $returned_content; #$response -> is_success;
+    skip 'request not successful', ($has_xml_xpath ? (keys(%path_tests) + keys(%path_counts)) : 0) unless $returned_content; #$response -> is_success;
                       
-    #is( $response -> code, 200, 'HTTP OK status' );
-
-#   diag $response -> content;
     if( $has_xml_xpath ) {
         do_xpath_tests(
             $returned_content, #$response -> content,

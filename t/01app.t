@@ -3,7 +3,7 @@ use warnings;
 
 eval "use Carp::Always"; # for those who don't have it
 
-use Test::More tests => 20;
+use Test::More tests => 29;
 
 BEGIN {
 use_ok 'RDF::Server::Interface';
@@ -27,6 +27,18 @@ use_ok "RDF::Server::Role::$_" for qw[
 
 use_ok 'RDF::Server::Formatter::RDF';
 use_ok 'RDF::Server::Formatter::Atom';
+
+use_ok 'RDF::Server::Semantic::Atom::Workspace';
+use_ok 'RDF::Server::Semantic::Atom::Collection';
+use_ok 'RDF::Server::Semantic::Atom::Category';
+use_ok 'RDF::Server::Semantic::Atom::Types';
+use_ok 'RDF::Server::Semantic::Atom';
+
+use_ok 'RDF::Server::Semantic::RDF::Types';
+use_ok 'RDF::Server::Semantic::RDF::Handler';
+use_ok 'RDF::Server::Semantic::RDF::Collection';
+
+use_ok 'RDF::Server::Semantic::RDF';
 
 SKIP: {
     skip 'RDF::Core not found', 2 unless not not eval 'require RDF::Core';

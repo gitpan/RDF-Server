@@ -8,8 +8,6 @@ renderers:
 port: 2080
 address: 127.0.0.1
 pidfile: /tmp/rdf-server.pid
-errorfile: /tmp/rdf-server.errors
-loglevel: 3
 default_renderer: Atom
 foreground: 1
 handler: 

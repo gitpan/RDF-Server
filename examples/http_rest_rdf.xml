@@ -5,8 +5,6 @@
   address="127.0.0.1"
   port="2080"
   pidfile="/tmp/rdf-server.pid"
-  errorfile="/tmp/rdf-server.errors"
-  loglevel="3"
   default_renderer="RDF"
   foreground="1"
 >

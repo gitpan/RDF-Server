@@ -32,6 +32,7 @@ sub handle {
 sub fetch {
     my( $self, $uri ) = @_;
 
+    return unless defined wantarray;
     $self -> handle( GET => $uri ) -> content;
 }
 
@@ -47,7 +48,8 @@ sub delete {
 sub update {
     my( $self, $uri, $content ) = @_;
 
-    $self -> handle( PUT => $uri, $content ) -> content;
+    my $r = $self -> handle( PUT => $uri, $content );
+    return $r -> content if defined wantarray;
 }
 
 sub create {
@@ -55,7 +57,8 @@ sub create {
 
     my $r = $self -> handle( POST => $uri, $content );
 
-    return( $r -> header('Location'), $r -> content );
+    return unless defined wantarray;
+    return ( $r -> header('Location'), $r -> content );
 }
 
 1;

@@ -11,7 +11,7 @@ use Storable ();
 
 use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
 
-our $VERSION='0.05';
+our $VERSION='0.06';
 
 has 'handler' => (
     is => 'rw',
@@ -55,32 +55,8 @@ has default_renderer => (
         }
     };
 
-    my @imported_into;
-
-    CHECK {
-        foreach my $class ( @imported_into ) {
-            next unless $class -> can('meta') && $class -> isa('RDF::Server');
-            Moose::Util::apply_all_roles(
-                $class -> meta, 
-                'RDF::Server::Protocol::Embedded'
-            ) unless is_Protocol( $class );
-            Moose::Util::apply_all_roles(
-                $class -> meta, 
-                'RDF::Server::Interface::REST'
-            ) unless is_Interface( $class );
-            Moose::Util::apply_all_roles(
-                $class -> meta, 
-                'RDF::Server::Semantic::Atom'
-            ) unless is_Semantic( $class );
-            #Moose::Util::apply_all_roles($class -> meta, @with);
-        }
-    }
-           
-
     sub import {
         my $CALLER = caller();
-
-        push @imported_into, $CALLER;
 
         my @addons = @_;
         shift @addons;
@@ -230,7 +206,7 @@ sub build_from_config {
     # $c -> {protocol,interface,semantic}
     # $c -> {with} -> [ ]
     # $c -> {renders} -> { }
-    my $class = 'RDF::Server::Class::__ANON__::SERIAL::' . $built_class;
+    my $class = 'RDF::Server::Class::__ANON__::SERIAL::' . ($built_class++);
 
     eval "package $class; use Moose; extends 'RDF::Server';";
 
@@ -240,9 +216,13 @@ sub build_from_config {
     Moose::Util::apply_all_roles($class -> meta, @{delete $c{with}})
         if $c{with};
 
-    _map_classes($class, 'RDF::Server::Interface', \&is_Interface, 'does not fill the RDF::Server::Interface role', delete $c{interface}) if $c{interface};
-    _map_classes($class, 'RDF::Server::Protocol', \&is_Protocol, 'does not fill the RDF::Server::Protocol role', delete $c{protocol}) if $c{protocol};
-    _map_classes($class, 'RDF::Server::Semantic', \&is_Semantic, 'does not fill the RDF::Server::Semantic role', delete $c{semantic}) if $c{semantic};
+    $c{interface} ||= 'REST';
+    $c{protocol} ||= 'Embedded';
+    $c{semantic} ||= 'Atom';
+
+    _map_classes($class, 'RDF::Server::Interface', \&is_Interface, 'does not fill the RDF::Server::Interface role', delete $c{interface});
+    _map_classes($class, 'RDF::Server::Protocol', \&is_Protocol, 'does not fill the RDF::Server::Protocol role', delete $c{protocol});
+    _map_classes($class, 'RDF::Server::Semantic', \&is_Semantic, 'does not fill the RDF::Server::Semantic role', delete $c{semantic});
 
     # now manage renderings
     $class -> set_renderer( $_ => $c{renderers}->{$_} )
@@ -318,7 +298,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.05
+                             RDF::Server 0.06
 
                       toolkit for building RDF servers
 
@@ -513,8 +493,6 @@ The interface defines how HTTP requests are mapped to actions on resources.
 
 Available interfaces: REST.
 
-Default is RDF::Server::Interface::REST.
-
 =item protocol
 
 The protocol is how the RDF server communicates with the world.
@@ -522,16 +500,12 @@ The protocol is how the RDF server communicates with the world.
 Available protocols: Embedded, HTTP.  FCGI is experimental.
 (Apache2 is on the TODO list.)
 
-Default is RDF::Server::Protocol::Embedded.
-
 =item semantic
 
 The server semantic determines how the RDF stores are structured and 
 presented in documents by managing how the handler is configured.
 
 Available semantics: Atom, RDF.
-
-Default is RDF::Server::Semantic::Atom.
 
 =item render
 

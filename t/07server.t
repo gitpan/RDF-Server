@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 10;
 use Test::Moose;
 use RDF::Server;
 eval "use Carp::Always"; # for those who don't have it
@@ -25,6 +25,8 @@ does_ok( $class, 'RDF::Server::Semantic::Atom' );
 does_ok( $class, 'RDF::Server::Protocol::HTTP' );
 does_ok( $class, 'RDF::Server::Interface::REST' );
 
+has_attribute_ok( $class, 'port' );
+
 my $server;
 
 eval {
@@ -39,7 +41,7 @@ is( $@, '' );
 
 isa_ok( $server, 'RDF::Server' );
 
-ok( $server -> meta -> get_attribute('port'), 'server meta has port attribute' );
+has_attribute_ok($server, 'port');
 
 my $p = eval { $server -> port; };
 

@@ -34,6 +34,10 @@ eval {
 
     use RDF::Server;
 
+    protocol 'Embedded';
+    interface 'REST';
+    semantic 'Atom';
+
     render xml => 'Atom';
     render [qw(rdf rss)] => 'RDF';
 };

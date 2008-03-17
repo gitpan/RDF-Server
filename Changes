@@ -1,3 +1,11 @@
+0.06  -  16 Mar 2008
+--------------------
+
+Fixed incrementing of serial number of build_from_config class
+
+Removed attempts at setting/providing default roles
+
+
 0.05  -  12 Mar 2008
 --------------------
 
