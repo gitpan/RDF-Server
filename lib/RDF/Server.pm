@@ -11,7 +11,7 @@ use Storable ();
 
 use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
 
-our $VERSION='0.06';
+our $VERSION='0.07';
 
 has 'handler' => (
     is => 'rw',
@@ -37,8 +37,8 @@ has default_renderer => (
         return Class::MOP::is_class_loaded($class);
     }
 
-    sub _map_classes {
-        my($parent_class, $prefix, $is_type, $message, $c) = @_;
+    sub _mapped_class {
+        my($prefix, $is_type, $message, $c) = @_;
         my $class;
         if( substr($c, 0, 1) eq '+' ) {
             $class = substr($c, 1);
@@ -51,8 +51,16 @@ has default_renderer => (
             confess $class . ' ' . $message;
         }
         else {
-            Moose::Util::apply_all_roles($parent_class -> meta, $class);
+            return $class;
         }
+    };
+
+    sub _map_classes {
+        my($parent_class, $prefix, $is_type, $message, $c) = @_;
+
+        Moose::Util::apply_all_roles($parent_class -> meta,
+            _mapped_class($prefix, $is_type, $message, $c)
+        );
     };
 
     sub import {
@@ -201,6 +209,7 @@ my $built_class = 1;
 sub build_from_config {
     my $super = shift;
 
+    $super = $super -> meta -> name;
     my %c = %{ Storable::dclone(+{ @_ }) };
 
     # $c -> {protocol,interface,semantic}
@@ -208,21 +217,27 @@ sub build_from_config {
     # $c -> {renders} -> { }
     my $class = 'RDF::Server::Class::__ANON__::SERIAL::' . ($built_class++);
 
-    eval "package $class; use Moose; extends 'RDF::Server';";
-
-    #$class -> meta -> _fix_metaclass_incompatabiity( $super );
-    #$class -> meta -> superclasses( $super );
-
-    Moose::Util::apply_all_roles($class -> meta, @{delete $c{with}})
-        if $c{with};
+    my %config = (
+        superclasses => [ $super ]
+    );
 
     $c{interface} ||= 'REST';
     $c{protocol} ||= 'Embedded';
     $c{semantic} ||= 'Atom';
 
-    _map_classes($class, 'RDF::Server::Interface', \&is_Interface, 'does not fill the RDF::Server::Interface role', delete $c{interface});
-    _map_classes($class, 'RDF::Server::Protocol', \&is_Protocol, 'does not fill the RDF::Server::Protocol role', delete $c{protocol});
-    _map_classes($class, 'RDF::Server::Semantic', \&is_Semantic, 'does not fill the RDF::Server::Semantic role', delete $c{semantic});
+    $config{roles} = (delete $c{with})||[];
+
+    push @{$config{roles}}, _mapped_class('RDF::Server::Interface', \&is_Interface, 'does not fill the RDF::Server::Interface role', delete $c{interface});
+    push @{$config{roles}}, _mapped_class('RDF::Server::Protocol', \&is_Protocol, 'does not fill the RDF::Server::Protocol role', delete $c{protocol});
+    push @{$config{roles}}, _mapped_class('RDF::Server::Semantic', \&is_Semantic, 'does not fill the RDF::Server::Semantic role', delete $c{semantic});
+
+    #use Data::Dumper;
+    #print STDERR Data::Dumper -> Dump([ \%config ]);
+
+    my $meta = Moose::Meta::Class -> create( $class => %config );
+
+#    Moose::Util::apply_all_roles($class -> meta, @{delete $c{with}})
+#        if $c{with};
 
     # now manage renderings
     $class -> set_renderer( $_ => $c{renderers}->{$_} )
@@ -298,7 +313,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.06
+                             RDF::Server 0.07
 
                       toolkit for building RDF servers
 

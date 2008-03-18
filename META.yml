@@ -3,8 +3,8 @@ abstract: toolkit for building RDF servers
 author: James Smith, C<< <jsmith@cpan.org> >>
 build_requires: 
   Path::Class::File: 0
-  Test::Moose: 0
-  Test::More: 0
+  Test::Moose: 0.01
+  Test::More: 0.72
 distribution_type: module
 generated_by: Module::Install version 0.67
 license: perl
@@ -17,20 +17,20 @@ no_index:
     - inc
     - t
 requires: 
-  Class::MOP: 0
-  Data::UUID: 0
-  DateTime: 0
-  HTTP::Request: 0
-  HTTP::Response: 0
-  HTTP::Status: 0
+  Class::MOP: 0.53
+  Data::UUID: 1.148
+  DateTime: 0.42
+  HTTP::Request: 1.4
+  HTTP::Response: 1.53
+  HTTP::Status: 1.28
   Iterator::Simple: 0.04
-  Log::Log4perl: 0
-  Moose: 0.36
-  MooseX::Types: 0
-  Sub::Exporter: 0
-  Sub::Name: 0
-  XML::LibXML: 0
-  XML::Simple: 0
+  Log::Log4perl: 1.15
+  Moose: 0.4
+  MooseX::Types: 0.04
+  Sub::Exporter: 0.978
+  Sub::Name: 0.03
+  XML::LibXML: 1.66
+  XML::Simple: 2.18
   perl: 5.8.0
 tests: t/*.t t/*/*.t xt/*.t
-version: 0.06
+version: 0.07

@@ -8,14 +8,10 @@ use Class::MOP ();
 use Moose::Util::TypeConstraints;
 use MooseX::Types::Moose qw( HashRef ArrayRef );
 
-use RDF::Server::Types qw( Handler Model Mutable );
+use RDF::Server::Types qw( Handler Model );
 use RDF::Server::Semantic::RDF::Types qw( :all );
 use RDF::Server::Semantic::RDF::Handler;
 use RDF::Server::Semantic::RDF::Collection;
-
-#BEGIN {
-#    Class::MOP::load_class('RDF::Server::Semantic::RDF::Handler');
-#}
 
 has '+handler' => (
     coerce => 1,
