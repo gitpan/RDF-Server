@@ -11,7 +11,7 @@ use Storable ();
 
 use 5.008;  # we have odd test failures on 5.6.2 that don't show up on 5.8+
 
-our $VERSION='0.07';
+our $VERSION='0.08';
 
 has 'handler' => (
     is => 'rw',
@@ -31,10 +31,11 @@ has default_renderer => (
 {
     sub _load_class {
         my( $class ) = @_;
-        not $class
-        or not not eval "require $class"
-        and eval { Class::MOP::load_class($class); };
-        return Class::MOP::is_class_loaded($class);
+        return(
+            $class
+            && eval { Class::MOP::load_class($class) }
+            && Class::MOP::is_class_loaded($class)
+        );
     }
 
     sub _mapped_class {
@@ -313,7 +314,7 @@ Build your server class at run-time:
 
 =begin readme
 
-                             RDF::Server 0.07
+                             RDF::Server 0.08
 
                       toolkit for building RDF servers
 

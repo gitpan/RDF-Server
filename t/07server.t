@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More;
 use Test::Moose;
 use RDF::Server;
 eval "use Carp::Always"; # for those who don't have it
@@ -6,6 +6,13 @@ eval "use Carp::Always"; # for those who don't have it
 ##
 # test things that aren't in other tests
 ##
+
+if( not eval { require POE::Component::Server::HTTP } ) {
+    plan skip_all => 'POE::Component::Server::HTTP required for this test';
+}
+else {
+    plan tests => 10;
+}
 
 my $class = RDF::Server -> build_from_config(
     interface => 'REST',

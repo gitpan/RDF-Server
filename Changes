@@ -1,3 +1,11 @@
+0.08  -  17 Mar 2008
+--------------------
+
+Better test of proper loading of roles when building server classes.
+
+Test 07 properly detects required modules
+
+
 0.07  -  17 Mar 2008
 --------------------
 
